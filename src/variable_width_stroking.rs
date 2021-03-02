@@ -3,19 +3,19 @@ use super::consts::{SMALL_DISTANCE};
 use super::piecewise::glif::PointData;
 use glifparser::{Glif, Outline};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct VWSContour {
     pub id: usize,
     pub handles: Vec<VWSHandle>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum InterpolationType {
     Linear,
     Null
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub struct VWSHandle {
     pub left_offset: f64,
     pub right_offset: f64,
@@ -99,10 +99,18 @@ fn fix_path(in_path: GlyphBuilder, closed: bool, settings: &VWSSettings) -> Glyp
             {
                 let tangent1 = bezier.tangent_at(1.).normalize(); 
                 let tangent2 = -first_bez.tangent_at(0.).normalize();
+                let discontinuity_vec = first_point - last_end;
+                let on_outside = Vector::dot(tangent2, discontinuity_vec) >= 0.;
 
-                //TODO: implement more complicated joins
-                out.bezier_to(bezier.clone());
-                join_to(&mut out, first_point, tangent1, tangent2);
+                if !on_outside {
+                    out.bezier_to(bezier.clone());
+                    join_to(&mut out, first_point, tangent1, tangent2);
+                }
+                else
+                {
+                    out.bezier_to(bezier.clone());
+                    out.line_to(first_point);
+                }
             }
             else
             {
@@ -226,11 +234,11 @@ pub fn variable_width_stroke_glif<T>(path: &Glif<T>, settings: VWSSettings) -> G
         panic!("No vws contours found in input!")
     }
     
-    let handles = handles.unwrap();
+    let handles = handles.expect("Input glyph has no lib node!");
 
     let iter = piece_path.segs.iter().enumerate();
     for (i, pwpath_contour) in iter {
-        let vws_contour = find_vws_contour(i, &handles);
+        let vws_contour = find_vws_contour(i, &handles.0);
         
         if let Some(contour) = vws_contour {
             let results = variable_width_stroke(&pwpath_contour, &contour.handles, &settings);
@@ -252,7 +260,7 @@ pub fn variable_width_stroke_glif<T>(path: &Glif<T>, settings: VWSSettings) -> G
         unicode: path.unicode,
         name: path.name.clone(),
         format: 2,
-        lib: None
+        lib: Some(handles.1)
     };
 }
 
@@ -267,61 +275,90 @@ pub fn find_vws_contour(id: usize, vws_outline: &Vec<VWSContour>) -> Option<&VWS
     return None;
 }
 
-pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<Vec<VWSContour>>
+pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::Element)>
 {
-    let mut lib = xmltree::Element::parse(input.lib.as_ref().unwrap().as_bytes()).expect("Invalid XML");
-    let mut vws_outline = Vec::new();
+    if let Some(lib) = input.lib.as_ref() {
+        let mut lib = lib.clone();
+        let mut vws_outline = Vec::new();
 
-    println!("{:?}", lib.children[0]);
-    while let Some(mut vws) = lib.take_child("vws") {
-        let name = vws
-            .attributes
-            .get("id")
-            .expect("VWSContour must have an id");
-
-        let mut vws_handles = VWSContour {
-            id: name.parse().unwrap(),
-            handles: Vec::new()
-        };
-
-        while let Some(vws_handle) = vws.take_child("handle") {
-            let left: f64 = vws_handle
+        while let Some(mut vws) = lib.take_child("vws") {
+            let name = vws
                 .attributes
-                .get("left")
-                .expect("VWSHandle missing left")
-                .parse()
-                .expect("VWSHandle not float.");
+                .get("id")
+                .expect("VWSContour must have an id");
 
-            let right: f64 = vws_handle
-                .attributes
-                .get("right")
-                .expect("VWSHandle missing right")
-                .parse()
-                .expect("VWSHandle not float.");
-
-            let interpolation_string: &String = vws_handle
-                .attributes
-                .get("interpolation")
-                .expect("VWSHandle missing interpolation type");
-
-            let interpolation = match interpolation_string.as_str() {
-                "linear" => InterpolationType::Linear,
-                _ => InterpolationType::Null
+            let mut vws_handles = VWSContour {
+                id: name.parse().unwrap(),
+                handles: Vec::new()
             };
 
-            vws_handles.handles.push(VWSHandle{
-                left_offset: left,
-                right_offset: right,
-                interpolation: interpolation
-            });
+            while let Some(vws_handle) = vws.take_child("handle") {
+                let left: f64 = vws_handle
+                    .attributes
+                    .get("left")
+                    .expect("VWSHandle missing left")
+                    .parse()
+                    .expect("VWSHandle not float.");
+
+                let right: f64 = vws_handle
+                    .attributes
+                    .get("right")
+                    .expect("VWSHandle missing right")
+                    .parse()
+                    .expect("VWSHandle not float.");
+
+                let interpolation_string: &String = vws_handle
+                    .attributes
+                    .get("interpolation")
+                    .expect("VWSHandle missing interpolation type");
+
+                let interpolation = match interpolation_string.as_str() {
+                    "linear" => InterpolationType::Linear,
+                    _ => InterpolationType::Null
+                };
+
+                vws_handles.handles.push(VWSHandle{
+                    left_offset: left,
+                    right_offset: right,
+                    interpolation: interpolation
+                });
+            }
+
+            vws_outline.push(vws_handles);
         }
 
-        vws_outline.push(vws_handles);
-    }
-
-    if vws_outline.len() > 0 {
-        return Some(vws_outline);
+        if vws_outline.len() > 0 {
+            return Some((vws_outline, lib));
+        }
     }
 
     return None;
+}
+
+pub fn generate_vws_lib(vwscontours:  &Vec<VWSContour>) -> Option<xmltree::Element>
+{
+    if vwscontours.len() == 0 { return None }
+    let mut lib_node = xmltree::Element::new("lib");
+
+    for vwcontour in vwscontours {
+        let mut vws_node = xmltree::Element::new("vws");
+         vws_node.attributes.insert("id".to_owned(), vwcontour.id.to_string());
+
+        for handle in &vwcontour.handles {
+            let mut handle_node = xmltree::Element::new("handle");
+            handle_node.attributes.insert("left".to_owned(), handle.left_offset.to_string());
+            handle_node.attributes.insert("right".to_owned(), handle.right_offset.to_string());
+
+            match handle.interpolation {
+                InterpolationType::Linear => {handle_node.attributes.insert("interpolation".to_owned(), "linear".to_owned());},
+                InterpolationType::Null => {handle_node.attributes.insert("interpolation".to_owned(), "none".to_owned());}
+            }
+            
+            vws_node.children.push(xmltree::XMLNode::Element(handle_node));
+        }
+
+        lib_node.children.push(xmltree::XMLNode::Element(vws_node));
+    }
+
+    return Some(lib_node);
 }

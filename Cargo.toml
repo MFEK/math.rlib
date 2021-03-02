@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 skia-safe = "0"
-flo_curves = { path = "../flo_curves" }
+flo_curves = { path = "../flo_curves"}
 glifparser = { path = "../glifparser" }
 xmltree = "0.10.1"
+xmlwriter = "0.1.0"

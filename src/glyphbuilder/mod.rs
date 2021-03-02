@@ -54,9 +54,10 @@ impl GlyphBuilder {
         let from = self.beziers.last().unwrap().end_point();
         let _intersection = Self::find_discontinuity_intersection(from, to, tangent1, tangent2);
 
+
         if let Some(intersection) = _intersection {
             // found an intersection so we draw a line to it
-            self.line_to(intersection);
+            if from.distance(intersection) < 2048. {  self.line_to(intersection);}
             self.line_to(to);
         }
         else
@@ -73,12 +74,29 @@ impl GlyphBuilder {
         let _intersection = Self::find_discontinuity_intersection(from, to, tangent1, tangent2);
         
         if let Some(intersection) = _intersection {
-            let radius = f64::min(from.distance(intersection), to.distance(intersection));
-            let angle = f64::acos(from.dot(to) / (from.magnitude() * to.magnitude()));
-            let dist_along_tangents = radius*(4./(3.*(1./f64::cos(angle/2.) + 1.)));
+            if intersection.distance(from) < 2048.
+            {
+                let radius = f64::min(from.distance(intersection), to.distance(intersection));
+                let angle = f64::acos(from.dot(to) / (from.magnitude() * to.magnitude()));
+                let dist_along_tangents = radius*(4./(3.*(1./f64::cos(angle/2.) + 1.)));
 
-            let arc = Bezier::from_points(from, from + tangent1 * dist_along_tangents, to + tangent2 * dist_along_tangents, to);
-            self.bezier_to(arc);
+                let arc = Bezier::from_points(from, from + tangent1 * dist_along_tangents, to + tangent2 * dist_along_tangents, to);
+                self.bezier_to(arc);
+            }
+            else
+            {
+                let radius = from.distance(to) * (2./3.);
+                let angle = f64::acos(from.dot(to) / (from.magnitude() * to.magnitude()));
+                let dist_along_tangents = radius*(4./(3.*(1./f64::cos(angle/2.) + 1.)));
+    
+                let arc = Bezier::from_points(
+                    from,
+                    from + tangent1 * dist_along_tangents,
+                    to + tangent2 * dist_along_tangents,
+                    to
+                );
+                self.bezier_to(arc);
+            }
         }
         else
         {
