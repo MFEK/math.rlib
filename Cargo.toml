@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 skia-safe = "0"
-flo_curves = { path = "../flo_curves"}
-glifparser = { path = "../glifparser" }
+flo_curves = { git = "https://github.com/MFEK/flo_curves", branch = "master" }
+glifparser = { git = "https://github.com/MatthewBlanchard/glifparser", branch = "variable-width-stroking" }
 xmltree = "0.10.1"
 xmlwriter = "0.1.0"
