@@ -292,18 +292,20 @@ pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::El
 
             let cap_start = vws
                 .attributes
-                .get("cap_start")
-                .expect("VWSContour must have a cap_start type!");
+                .get("cap_start");
             
             let cap_end = vws
                 .attributes
-                .get("cap_end")
-                .expect("VWSContour must have a cap_end type!");
+                .get("cap_end");
             
             let join = vws
                 .attributes
-                .get("join")
-                .expect("VWSContour must have a cap type!");
+                .get("join");
+
+            let round_str ="round".to_string();
+            let cap_start = cap_start.unwrap_or(&round_str);
+            let cap_end = cap_end.unwrap_or(&round_str);
+            let join = join.unwrap_or(&round_str);
 
             let cap_start_type = match cap_start.as_str() {
                 "round" => CapType::Round,
@@ -378,6 +380,12 @@ pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::El
     return None;
 }
 
+pub fn cap_type_to_string(ct: CapType) -> String 
+{
+    match ct {
+
+    }
+}
 pub fn generate_vws_lib(vwscontours:  &Vec<VWSContour>) -> Option<xmltree::Element>
 {
     if vwscontours.len() == 0 { return None }
@@ -391,6 +399,10 @@ pub fn generate_vws_lib(vwscontours:  &Vec<VWSContour>) -> Option<xmltree::Eleme
             let mut handle_node = xmltree::Element::new("handle");
             handle_node.attributes.insert("left".to_owned(), handle.left_offset.to_string());
             handle_node.attributes.insert("right".to_owned(), handle.right_offset.to_string());
+
+            handle_node.attributes.insert("right".to_owned(), handle.right_offset.to_string());
+            handle_node.attributes.insert("right".to_owned(), handle.right_offset.to_string());
+
 
             match handle.interpolation {
                 InterpolationType::Linear => {handle_node.attributes.insert("interpolation".to_owned(), "linear".to_owned());},
