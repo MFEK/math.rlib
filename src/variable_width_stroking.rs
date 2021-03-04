@@ -6,7 +6,10 @@ use glifparser::{Glif, Outline};
 #[derive(Debug, Clone)]
 pub struct VWSContour {
     pub id: usize,
-    pub handles: Vec<VWSHandle>
+    pub handles: Vec<VWSHandle>,
+    pub join_type: JoinType,
+    pub cap_start_type: CapType,
+    pub cap_end_type: CapType
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -22,12 +25,14 @@ pub struct VWSHandle {
     pub interpolation: InterpolationType
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum JoinType {
     Bevel,
     Miter,
     Round
 }
 
+#[derive(Debug, Clone, Copy)]
 pub enum CapType {
     Round,
     Square,
@@ -35,19 +40,16 @@ pub enum CapType {
 }
 
 pub struct VWSSettings {
-    pub join_type: JoinType,
-    pub cap_type_start: CapType,
-    pub cap_type_end: CapType,
     pub cap_custom_start: Option<Glif<Option<PointData>>>,
     pub cap_custom_end: Option<Glif<Option<PointData>>>,
 }
 
 // takes a vector of beziers and fills in discontinuities with joins
-fn fix_path(in_path: GlyphBuilder, closed: bool, settings: &VWSSettings) -> GlyphBuilder
+fn fix_path(in_path: GlyphBuilder, closed: bool, join_type: JoinType) -> GlyphBuilder
 {
     let mut out = GlyphBuilder::new();
 
-    let join_to = match &settings.join_type {
+    let join_to = match join_type {
         JoinType::Bevel => GlyphBuilder::bevel_to,
         JoinType::Round => GlyphBuilder::arc_to,
         JoinType::Miter => GlyphBuilder::miter_to
@@ -126,8 +128,9 @@ fn fix_path(in_path: GlyphBuilder, closed: bool, settings: &VWSSettings) -> Glyp
     return out;
 }
 
-pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, stroke_handles: &Vec<VWSHandle>, settings: &VWSSettings) -> Piecewise<Piecewise<Bezier>> {
+pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour, settings: &VWSSettings) -> Piecewise<Piecewise<Bezier>> {
     let closed = in_pw.is_closed();
+    let stroke_handles = &vws_contour.handles;
 
     // check if our input path is closed
     // We're gonna keep track of a left line and a right line.
@@ -167,8 +170,8 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, stroke_handles: &Vec<VWS
                     .collect()
     };
 
-    right_line = fix_path(right_line, closed, &settings);
-    left_line = fix_path(left_line, closed, &settings);
+    right_line = fix_path(right_line, closed, vws_contour.join_type);
+    left_line = fix_path(left_line, closed, vws_contour.join_type);
 
     if in_pw.is_closed() {
         let mut out = Vec::new();
@@ -194,7 +197,7 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, stroke_handles: &Vec<VWS
         let tangent1 = from.tangent_at(1.).normalize(); 
         let tangent2 = -to.tangent_at(0.).normalize();
 
-        match &settings.cap_type_end {
+        match vws_contour.cap_end_type {
             CapType::Round => out_builder.arc_to(to.start_point(), tangent1, tangent2),
             CapType::Square => out_builder.line_to(to.start_point()),
             CapType::Custom => out_builder.cap_to(to.start_point(), settings.cap_custom_end.as_ref().unwrap())
@@ -208,9 +211,9 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, stroke_handles: &Vec<VWS
         let to = out_builder.beziers.first().unwrap().clone();
 
         let tangent1 = from.tangent_at(1.).normalize(); 
-        let tangent2 = to.tangent_at(0.).normalize();
+        let tangent2 = -to.tangent_at(0.).normalize();
 
-        match &settings.cap_type_start {
+        match vws_contour.cap_start_type {
             CapType::Round => out_builder.arc_to(to.end_point(), tangent1, tangent2),
             CapType::Square => out_builder.line_to(to.end_point()),
             CapType::Custom => {}//currently unhandled
@@ -241,7 +244,7 @@ pub fn variable_width_stroke_glif<T>(path: &Glif<T>, settings: VWSSettings) -> G
         let vws_contour = find_vws_contour(i, &handles.0);
         
         if let Some(contour) = vws_contour {
-            let results = variable_width_stroke(&pwpath_contour, &contour.handles, &settings);
+            let results = variable_width_stroke(&pwpath_contour, &contour, &settings);
             for result_contour in results.segs {
                 output_outline.push(result_contour.to_contour());
             }
@@ -287,9 +290,48 @@ pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::El
                 .get("id")
                 .expect("VWSContour must have an id");
 
+            let cap_start = vws
+                .attributes
+                .get("cap_start")
+                .expect("VWSContour must have a cap_start type!");
+            
+            let cap_end = vws
+                .attributes
+                .get("cap_end")
+                .expect("VWSContour must have a cap_end type!");
+            
+            let join = vws
+                .attributes
+                .get("join")
+                .expect("VWSContour must have a cap type!");
+
+            let cap_start_type = match cap_start.as_str() {
+                "round" => CapType::Round,
+                "square" => CapType::Square,
+                "custom" => CapType::Custom,
+                _ => panic!("Invalid cap type!")
+            };
+            
+            let cap_end_type = match cap_end.as_str() {
+                "round" => CapType::Round,
+                "square" => CapType::Square,
+                "custom" => CapType::Custom,
+                _ => panic!("Invalid cap type!")
+            };
+
+            let join_type = match join.as_str() {
+                "round" => JoinType::Round,
+                "miter" => JoinType::Miter,
+                "bevel" => JoinType::Bevel,
+                _ => panic!("Invalid join type!")
+            };
+
             let mut vws_handles = VWSContour {
                 id: name.parse().unwrap(),
-                handles: Vec::new()
+                handles: Vec::new(),
+                cap_start_type: cap_start_type,
+                cap_end_type: cap_end_type,
+                join_type: join_type
             };
 
             while let Some(vws_handle) = vws.take_child("handle") {
@@ -311,6 +353,7 @@ pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::El
                     .attributes
                     .get("interpolation")
                     .expect("VWSHandle missing interpolation type");
+                    
 
                 let interpolation = match interpolation_string.as_str() {
                     "linear" => InterpolationType::Linear,
