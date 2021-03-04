@@ -60,7 +60,7 @@ fn fix_path(in_path: GlyphBuilder, closed: bool, settings: &VWSSettings) -> Glyp
         {
             let next_start = next_bezier.start_point();
             let last_end = bezier.end_point();
-            if !last_end.is_near(next_start, SMALL_DISTANCE)
+            if !last_end.is_near(next_start, SMALL_DISTANCE/2.)
             {
                 // the end of our last curve doesn't match up with the start of our next so we need to
                 // deal with the discontinuity be creating a join
