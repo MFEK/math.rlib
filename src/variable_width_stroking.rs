@@ -156,10 +156,23 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
             _ => next_handle.right_offset
         };
 
-        let left_offset = flo_curves::bezier::offset_lms_sampling(bezier, |t| (1. - t) * -left_start + t * -left_end, 20, 4.0);
+
+
+        let left_closure = |t| {
+            let t2 = (1.-f64::cos(t*std::f64::consts::PI))/2.;
+            return -left_start*(1.-t2)+-left_end*t2;
+        };
+
+        
+        let right_closure = |t| {
+            let t2 = (1.-f64::cos(t*std::f64::consts::PI))/2.;
+            return right_start*(1.-t2)+right_end*t2;
+        };
+
+        let left_offset = flo_curves::bezier::offset_lms_sampling(bezier, left_closure, 20, 4.0);
         left_line.append_vec(left_offset.unwrap());
 
-        let right_offset = flo_curves::bezier::offset_lms_sampling(bezier, |t| (1. - t) * right_start + t * right_end, 20, 4.0);
+        let right_offset = flo_curves::bezier::offset_lms_sampling(bezier, right_closure, 20, 4.0);
         right_line.append_vec(right_offset.unwrap());
     }
      
@@ -388,6 +401,16 @@ pub fn cap_type_to_string(ct: CapType)  -> String
         CapType::Custom => "custom".to_string(),
     }
 }
+
+pub fn join_type_to_string(jt: JoinType)  -> String
+{
+    match jt {
+        JoinType::Round => "round".to_string(),
+        JoinType::Miter => "miter".to_string(),
+        JoinType::Bevel => "bevel".to_string(),
+    }
+}
+
 pub fn generate_vws_lib(vwscontours:  &Vec<VWSContour>) -> Option<xmltree::Element>
 {
     if vwscontours.len() == 0 { return None }
@@ -398,6 +421,7 @@ pub fn generate_vws_lib(vwscontours:  &Vec<VWSContour>) -> Option<xmltree::Eleme
          vws_node.attributes.insert("id".to_owned(), vwcontour.id.to_string());
          vws_node.attributes.insert("cap_start".to_owned(), cap_type_to_string(vwcontour.cap_start_type));
          vws_node.attributes.insert("cap_end".to_owned(), cap_type_to_string(vwcontour.cap_end_type));
+         vws_node.attributes.insert("join".to_owned(), join_type_to_string(vwcontour.join_type));
 
         for handle in &vwcontour.handles {
             let mut handle_node = xmltree::Element::new("handle");
