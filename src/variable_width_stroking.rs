@@ -380,10 +380,12 @@ pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::El
     return None;
 }
 
-pub fn cap_type_to_string(ct: CapType) -> String 
+pub fn cap_type_to_string(ct: CapType)  -> String
 {
     match ct {
-
+        CapType::Round => "round".to_string(),
+        CapType::Square => "square".to_string(),
+        CapType::Custom => "custom".to_string(),
     }
 }
 pub fn generate_vws_lib(vwscontours:  &Vec<VWSContour>) -> Option<xmltree::Element>
@@ -394,13 +396,12 @@ pub fn generate_vws_lib(vwscontours:  &Vec<VWSContour>) -> Option<xmltree::Eleme
     for vwcontour in vwscontours {
         let mut vws_node = xmltree::Element::new("vws");
          vws_node.attributes.insert("id".to_owned(), vwcontour.id.to_string());
+         vws_node.attributes.insert("cap_start".to_owned(), cap_type_to_string(vwcontour.cap_start_type));
+         vws_node.attributes.insert("cap_end".to_owned(), cap_type_to_string(vwcontour.cap_end_type));
 
         for handle in &vwcontour.handles {
             let mut handle_node = xmltree::Element::new("handle");
             handle_node.attributes.insert("left".to_owned(), handle.left_offset.to_string());
-            handle_node.attributes.insert("right".to_owned(), handle.right_offset.to_string());
-
-            handle_node.attributes.insert("right".to_owned(), handle.right_offset.to_string());
             handle_node.attributes.insert("right".to_owned(), handle.right_offset.to_string());
 
 
