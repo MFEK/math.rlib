@@ -156,11 +156,11 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
             _ => next_handle.right_offset
         };
 
-        let left_offset = flo_curves::bezier::offset(bezier, -left_start, -left_end);
-        left_line.append_vec(left_offset);
+        let left_offset = flo_curves::bezier::offset_lms_sampling(bezier, |t| (1. - t) * -left_start + t * -left_end, 20, 4.0);
+        left_line.append_vec(left_offset.unwrap());
 
-        let right_offset = flo_curves::bezier::offset(bezier, right_start, right_end);
-        right_line.append_vec(right_offset);
+        let right_offset = flo_curves::bezier::offset_lms_sampling(bezier, |t| (1. - t) * right_start + t * right_end, 20, 4.0);
+        right_line.append_vec(right_offset.unwrap());
     }
      
     right_line.beziers.reverse();
