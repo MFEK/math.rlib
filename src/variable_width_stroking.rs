@@ -22,6 +22,7 @@ pub enum InterpolationType {
 pub struct VWSHandle {
     pub left_offset: f64,
     pub right_offset: f64,
+    pub tangent_offset: f64,
     pub interpolation: InterpolationType
 }
 
@@ -156,17 +157,17 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
             _ => next_handle.right_offset
         };
 
-
+        let tangent_start = cur_handle.tangent_offset;
+        let tangent_end = next_handle.tangent_offset;
 
         let left_closure = |t| {
             let t2 = (1.-f64::cos(t*std::f64::consts::PI))/2.;
-            return -left_start*(1.-t2)+-left_end*t2;
+            return (-left_start*(1.-t2)+-left_end*t2, (1. - t) * -tangent_start + t * -tangent_end);
         };
-
         
         let right_closure = |t| {
             let t2 = (1.-f64::cos(t*std::f64::consts::PI))/2.;
-            return right_start*(1.-t2)+right_end*t2;
+            return (right_start*(1.-t2)+right_end*t2, tangent_start*(1.-t2)+tangent_end*t2);
         };
 
         let left_offset = flo_curves::bezier::offset_lms_sampling(bezier, left_closure, 20, 4.0);
@@ -364,6 +365,13 @@ pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::El
                     .parse()
                     .expect("VWSHandle not float.");
 
+                let tangent: f64 = vws_handle
+                    .attributes
+                    .get("tangent")
+                    .expect("VWSHandle missing tangent")
+                    .parse()
+                    .expect("VWSHandle tangent not float.");
+
                 let interpolation_string: &String = vws_handle
                     .attributes
                     .get("interpolation")
@@ -378,6 +386,7 @@ pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::El
                 vws_handles.handles.push(VWSHandle{
                     left_offset: left,
                     right_offset: right,
+                    tangent_offset: tangent,
                     interpolation: interpolation
                 });
             }
