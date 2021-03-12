@@ -77,7 +77,6 @@ impl Piecewise<Bezier> {
             match last_curve
             {
                 Some(lc) => {
-                    // set the last output point's a handle to match the new curve
                     new_point.b = lc[2].to_handle();
                 }
                 None => {}

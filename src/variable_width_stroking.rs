@@ -157,17 +157,26 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
             _ => next_handle.right_offset
         };
 
+        let max_tangent_start = f64::max(cur_handle.right_offset, cur_handle.left_offset);
+        let max_tangent_end = f64::max(next_handle.right_offset, next_handle.left_offset);
+
+        let left_ratio_start = cur_handle.left_offset/max_tangent_start;
+        let left_ratio_end = next_handle.left_offset/max_tangent_end;
+
+        let right_ratio_start = cur_handle.right_offset/max_tangent_start;
+        let right_ratio_end = next_handle.right_offset/max_tangent_end;
+
         let tangent_start = cur_handle.tangent_offset;
         let tangent_end = next_handle.tangent_offset;
 
         let left_closure = |t| {
             let t2 = (1.-f64::cos(t*std::f64::consts::PI))/2.;
-            return (-left_start*(1.-t2)+-left_end*t2, (1. - t) * -tangent_start + t * -tangent_end);
+            return (-left_start*(1.-t2)+-left_end*t2, -tangent_start*left_ratio_start*(1.-t2)+-tangent_end*left_ratio_end*t2);
         };
         
         let right_closure = |t| {
             let t2 = (1.-f64::cos(t*std::f64::consts::PI))/2.;
-            return (right_start*(1.-t2)+right_end*t2, tangent_start*(1.-t2)+tangent_end*t2);
+            return (right_start*(1.-t2)+right_end*t2, tangent_start*right_ratio_start*(1.-t2)+tangent_end*right_ratio_end*t2);
         };
 
         let left_offset = flo_curves::bezier::offset_lms_sampling(bezier, left_closure, 20, 4.0);
@@ -227,10 +236,10 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
         let tangent1 = from.tangent_at(1.).normalize(); 
         let tangent2 = -to.tangent_at(0.).normalize();
 
-        match vws_contour.cap_start_type {
-            CapType::Round => out_builder.arc_to(to.end_point(), tangent1, tangent2),
-            CapType::Square => out_builder.line_to(to.end_point()),
-            CapType::Custom => {}//currently unhandled
+        match vws_contour.cap_end_type {
+            CapType::Round => out_builder.arc_to(to.start_point(), tangent1, tangent2),
+            CapType::Square => out_builder.line_to(to.start_point()),
+            CapType::Custom => out_builder.cap_to(to.start_point(), settings.cap_custom_start.as_ref().unwrap())
         }
 
         let inner = Piecewise::new(out_builder.beziers, None);
