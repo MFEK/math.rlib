@@ -445,6 +445,7 @@ pub fn generate_vws_lib(vwscontours:  &Vec<VWSContour>) -> Option<xmltree::Eleme
             let mut handle_node = xmltree::Element::new("handle");
             handle_node.attributes.insert("left".to_owned(), handle.left_offset.to_string());
             handle_node.attributes.insert("right".to_owned(), handle.right_offset.to_string());
+            handle_node.attributes.insert("tangent".to_owned(), handle.tangent_offset.to_string());
 
 
             match handle.interpolation {
