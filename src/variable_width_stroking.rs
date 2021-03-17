@@ -236,7 +236,7 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
         let tangent1 = from.tangent_at(1.).normalize(); 
         let tangent2 = -to.tangent_at(0.).normalize();
 
-        match vws_contour.cap_end_type {
+        match vws_contour.cap_start_type {
             CapType::Round => out_builder.arc_to(to.start_point(), tangent1, tangent2),
             CapType::Square => out_builder.line_to(to.start_point()),
             CapType::Custom => out_builder.cap_to(to.start_point(), settings.cap_custom_start.as_ref().unwrap())
