@@ -4,6 +4,7 @@ use super::super::consts::SMALL_DISTANCE;
 
 // stub PointData out here, really not sure how I should be handnling this because we need a concrete
 // type to construct our own glif
+#[derive(Debug)]
 pub struct PointData;
 
 impl<T> From<&Outline<T>> for Piecewise<Piecewise<Bezier>>

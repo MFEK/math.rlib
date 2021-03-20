@@ -26,14 +26,14 @@ pub struct VWSHandle {
     pub interpolation: InterpolationType
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum JoinType {
     Bevel,
     Miter,
     Round
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CapType {
     Round,
     Square,
