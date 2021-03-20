@@ -56,24 +56,28 @@ impl<T: Evaluate> Piecewise<T> {
     // implementation ripped from lib2geom, performs a binary search to find our segment
     fn seg_n(&self, t: f64) -> usize
     {
-        let (mut low, mut high) = (0, self.segs.len() - 1);
-        if t < *self.cuts.first().unwrap() { return 0; }
-        if t > *self.cuts.last().unwrap() { return self.segs.len() - 1; }
+        let mut left = 0;
+        let mut right = self.cuts.len() - 1;
 
-        while low < high {
-            let mid = (high + low) / 2;
-            let mv = self.cuts[mid];
+        while left < right {
+            let middle = (right+left)/2;
 
-            if mv < t {
-                if t < self.cuts[mid+1] { return mid; } else { low = mid + 1; }
-            } else if  t < mv {
-                if self.cuts[mid-1] < t { return mid; } else { high = mid - 1; }
-            } else {
-                return mid;
+            if left == middle { return middle; }
+            if right == middle { return left; }
+            if self.cuts[middle] == t { return middle };
+
+            if self.cuts[middle] < t {
+                left = middle
+            }
+            else
+            {
+                right = middle;
             }
         }
 
-        return low;
+        
+        // This needs to be replaced with success/failure.
+        panic!("Couldn't find the target segment!");
     }
 
     fn seg_t(&self, t: f64) -> f64 
