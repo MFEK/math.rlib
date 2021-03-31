@@ -142,7 +142,12 @@ impl GlyphBuilder {
         let normal = vec2!(tangent.y, -tangent.x).normalize();
         let cap_normal = vec2!(cap_tangent.y, -cap_tangent.x).normalize();
 
-        let angle = f64::acos(normal.dot(-cap_normal));
+        let dot_product = normal.dot(-cap_normal);
+        let angle = {
+            let a = f64::acos(dot_product);
+            if normal.y.is_sign_negative() { -a } else { a }
+        };
+
         let rotated_cap = translated_cap.rotate(angle);
 
         // finally we translate the cap from 0,0 being the midpoint between the caps first and last points
