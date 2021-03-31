@@ -68,11 +68,13 @@ impl Piecewise<Bezier> {
         let mut output_contour: Contour<Option<PointData>> = Vec::new();
         let mut last_curve: Option<[Vector; 4]> = None;
 
+        let mut first_point = true;
         for curve in &self.segs
         {                       
             let control_points = curve.to_control_points();
 
-            let mut new_point = control_points[0].to_point(control_points[1].to_handle(), Handle::Colocated);
+            let point_type = if first_point && !self.is_closed() { PointType::Move } else { PointType::Curve };
+            let mut new_point = control_points[0].to_point(control_points[1].to_handle(), Handle::Colocated, point_type);
 
             // if this isn't the first point we need to backtrack and set our output point's b handle
             match last_curve
@@ -86,18 +88,15 @@ impl Piecewise<Bezier> {
             output_contour.push(new_point);
 
             last_curve = Some(control_points);
+            first_point = false;
         }
 
 
-        if output_contour.len() > 1 {
+        if output_contour.len() > 1 && self.is_closed() {
             let fp = output_contour.first_mut().unwrap();
-            let (fv, lv) = (Vector::from_point(fp), last_curve.unwrap()[3]);
 
-            if  fv.is_near(lv, SMALL_DISTANCE)
-            {
-                // we've got to connect the last point and the first point
-                fp.b = Vector::to_handle(last_curve.unwrap()[2]);
-            }
+            // we've got to connect the last point and the first point
+             fp.b = Vector::to_handle(last_curve.unwrap()[2]);
         }
     
         return output_contour;
