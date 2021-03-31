@@ -7,7 +7,7 @@ impl Vector {
         Vector { x: point.x as f64, y: point.y as f64 }
     }
 
-    pub fn to_point<T>(self, handle_a: Handle, handle_b: Handle) -> glifparser::Point<T>
+    pub fn to_point<T>(self, handle_a: Handle, handle_b: Handle, ptype: PointType) -> glifparser::Point<T>
     {
         return glifparser::Point {
             x: self.x as f32,
@@ -16,7 +16,7 @@ impl Vector {
             b: handle_b,
             data: None,
             name: None,
-            ptype: PointType::Curve
+            ptype: ptype
         }
     }
 
