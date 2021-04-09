@@ -9,10 +9,10 @@ mod flo;
 #[derive(Clone, Debug)]
 #[allow(non_snake_case)]
 pub struct Bezier {
-    w1: Vector,
-    w2: Vector,
-    w3: Vector,
-    w4: Vector
+    pub w1: Vector,
+    pub w2: Vector,
+    pub w3: Vector,
+    pub w4: Vector
 }
 
 impl Bezier {

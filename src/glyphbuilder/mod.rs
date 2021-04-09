@@ -80,7 +80,7 @@ impl GlyphBuilder {
     pub fn miter_to(&mut self, to: Vector, tangent1: Vector, tangent2: Vector)
     {
         let from = self.beziers.last().unwrap().end_point();
-        let _intersection = Self::find_discontinuity_intersection(from, to, tangent1, tangent2);
+        let _intersection = Self::find_discontinuity_intersection(from, to, tangent1, -tangent2);
 
 
         if let Some(intersection) = _intersection {
@@ -99,47 +99,34 @@ impl GlyphBuilder {
     pub fn arc_to(&mut self, to: Vector, tangent1: Vector, tangent2: Vector)
     {
         let from = self.beziers.last().unwrap().end_point();
-        let _intersection = Self::find_discontinuity_intersection(from, to, tangent1, tangent2);
+        let _intersection = Self::find_discontinuity_intersection(from, to, tangent1, -tangent2);
+        let dot_product = tangent1.dot(tangent2);
+        let normalized_dot_product = (dot_product + 1.)/2.;
+        let angle = f64::acos(dot_product);
+        let n = f64::abs(consts::TAU/angle);
         
+        println!("{:?}", dot_product);
         if let Some(intersection) = _intersection {
             if intersection.distance(from) < from.distance(to)
             {
-                let radius = f64::min(from.distance(intersection), to.distance(intersection));
-                let angle = f64::acos(from.dot(to) / (from.magnitude() * to.magnitude()));
-                let dist_along_tangents = radius*(4./(3.*(1./f64::cos(angle/2.) + 1.)));
+                let radius = from.distance(to) * (3./6. + (normalized_dot_product) * 3./6.);
+                let dist_along_tangents = radius*(4./3.)*f64::tan(consts::PI/(2. * n));
 
-                let arc = Bezier::from_points(from, from + tangent1 * dist_along_tangents, to + tangent2 * dist_along_tangents, to);
-                self.bezier_to(arc);
-            }
-            else
-            {
-                let radius = from.distance(to) * (2./3.);
-                let angle = f64::acos(from.dot(to) / (from.magnitude() * to.magnitude()));
-                let dist_along_tangents = radius*(4./(3.*(1./f64::cos(angle/2.) + 1.)));
-    
-                let arc = Bezier::from_points(
-                    from,
-                    from + tangent1 * dist_along_tangents,
-                    to + tangent2 * dist_along_tangents,
-                    to
-                );
-                self.bezier_to(arc);
+                let arc = Bezier::from_points(from, from + tangent1 * dist_along_tangents, to + -tangent2 * dist_along_tangents, to);
+                return self.bezier_to(arc);
             }
         }
-        else
-        {
-            let radius = from.distance(to) * (2./3.);
-            let angle = f64::acos(from.dot(to) / (from.magnitude() * to.magnitude()));
-            let dist_along_tangents = radius*(4./(3.*(1./f64::cos(angle/2.) + 1.)));
 
-            let arc = Bezier::from_points(
-                from,
-                from + tangent1 * dist_along_tangents,
-                to + tangent2 * dist_along_tangents,
-                to
-            );
-            self.bezier_to(arc);
-        }
+        let radius = from.distance(to) * (3./6. + (normalized_dot_product) * 3./6.);
+        let dist_along_tangents = radius*(4./3.)*f64::tan(consts::PI/(2. * n));
+
+        let arc = Bezier::from_points(
+            from,
+            from + tangent1 * dist_along_tangents,
+            to + -tangent2 * dist_along_tangents,
+            to
+        );
+        self.bezier_to(arc);
     }
 
     pub fn circle_arc_to(&mut self, to: Vector, tangent1: Vector, tangent2: Vector)
@@ -191,9 +178,13 @@ impl GlyphBuilder {
         for n in 0 .. repetitions as usize {
             let cur_angle = starting_angle + degrees_90 * n as f64;
             let next_angle = cur_angle + degrees_90;
-            let cp1 = if first_point { from } else {
-                vec2!(f64::cos(cur_angle), f64::sin(cur_angle)) * radius + circle_center
-            };
+            let cp1 = vec2!(f64::cos(cur_angle), f64::sin(cur_angle)) * radius + circle_center;
+
+            if first_point { 
+                let last = self.beziers.pop().unwrap();
+                self.beziers.push(Bezier::from_points(last.w1, last.w2, last.w3, cp1));
+            }
+
             let cp2 = vec2!(f64::cos(next_angle), f64::sin(next_angle)) * radius + circle_center;
 
             let handle_distance = (4./3.)*f64::tan(consts::PI/8.);
