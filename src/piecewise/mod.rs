@@ -102,8 +102,31 @@ impl<T: Evaluate<EvalResult = Vector>+Primitive> Piecewise<Piecewise<T>>
     }
 }
 
+impl Piecewise<Bezier> {
+    pub fn fuse_nearby_ends(&self, distance: f64) -> Piecewise<Bezier> {
+        let mut iter = self.segs.iter().peekable();
+        let mut new_segments = Vec::new();
+        while let Some(primitive) = iter.next() {
+            for next_primitive in iter.peek() {
+                if primitive.end_point().distance(next_primitive.start_point()) <= distance {
+                    let mut new_primitive = primitive.to_control_points();
+                    new_primitive[3] = next_primitive.start_point();
+                    new_segments.push(Bezier::from_points(new_primitive[0], new_primitive[1], new_primitive[2], new_primitive[3]));
+                }
+                else
+                {
+                    new_segments.push(primitive.clone());
+                }
+            }
+        }
+
+        return Piecewise::new(new_segments, Some(self.cuts.clone()));
+    }
+}
+
 impl<T: Evaluate<EvalResult = Vector>+Primitive> Piecewise<T>
 {    
+
     pub fn is_closed(&self) -> bool
     {
         if self.start_point().is_near(self.end_point(),SMALL_DISTANCE)

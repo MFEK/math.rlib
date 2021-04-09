@@ -30,13 +30,15 @@ pub struct VWSHandle {
 pub enum JoinType {
     Bevel,
     Miter,
-    Round
+    Round,
+    Circle
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum CapType {
     Round,
     Square,
+    Circle,
     Custom
 }
 
@@ -53,6 +55,7 @@ fn fix_path(in_path: GlyphBuilder, closed: bool, join_type: JoinType) -> GlyphBu
     let join_to = match join_type {
         JoinType::Bevel => GlyphBuilder::bevel_to,
         JoinType::Round => GlyphBuilder::arc_to,
+        JoinType::Circle => GlyphBuilder::circle_arc_to,
         JoinType::Miter => GlyphBuilder::miter_to
     };
 
@@ -193,6 +196,9 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
                     .collect()
     };
 
+    right_line = right_line.fuse_nearby_ends(0.01);
+    left_line = left_line.fuse_nearby_ends(0.01);
+
     right_line = fix_path(right_line, closed, vws_contour.join_type);
     left_line = fix_path(left_line, closed, vws_contour.join_type);
 
@@ -222,6 +228,7 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
 
         match vws_contour.cap_end_type {
             CapType::Round => out_builder.arc_to(to.start_point(), tangent1, tangent2),
+            CapType::Circle => out_builder.circle_arc_to(to.start_point(), tangent1, to.tangent_at(0.).normalize()),
             CapType::Square => out_builder.line_to(to.start_point()),
             CapType::Custom => out_builder.cap_to(to.start_point(), settings.cap_custom_end.as_ref().unwrap())
         }
@@ -238,6 +245,7 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
 
         match vws_contour.cap_start_type {
             CapType::Round => out_builder.arc_to(to.start_point(), tangent1, tangent2),
+            CapType::Circle => out_builder.circle_arc_to(to.start_point(), tangent1, to.tangent_at(0.).normalize()),
             CapType::Square => out_builder.line_to(to.start_point()),
             CapType::Custom => out_builder.cap_to(to.start_point(), settings.cap_custom_start.as_ref().unwrap())
         }
@@ -332,6 +340,7 @@ pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::El
 
             let cap_start_type = match cap_start.as_str() {
                 "round" => CapType::Round,
+                "circle" => CapType::Circle,
                 "square" => CapType::Square,
                 "custom" => CapType::Custom,
                 _ => panic!("Invalid cap type!")
@@ -339,6 +348,7 @@ pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::El
             
             let cap_end_type = match cap_end.as_str() {
                 "round" => CapType::Round,
+                "circle" => CapType::Circle,
                 "square" => CapType::Square,
                 "custom" => CapType::Custom,
                 _ => panic!("Invalid cap type!")
@@ -346,6 +356,7 @@ pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::El
 
             let join_type = match join.as_str() {
                 "round" => JoinType::Round,
+                "circle" => JoinType::Circle,
                 "miter" => JoinType::Miter,
                 "bevel" => JoinType::Bevel,
                 _ => panic!("Invalid join type!")
@@ -415,6 +426,7 @@ pub fn cap_type_to_string(ct: CapType)  -> String
 {
     match ct {
         CapType::Round => "round".to_string(),
+        CapType::Circle => "circle".to_string(),
         CapType::Square => "square".to_string(),
         CapType::Custom => "custom".to_string(),
     }
@@ -424,6 +436,7 @@ pub fn join_type_to_string(jt: JoinType)  -> String
 {
     match jt {
         JoinType::Round => "round".to_string(),
+        JoinType::Circle => "circle".to_string(),
         JoinType::Miter => "miter".to_string(),
         JoinType::Bevel => "bevel".to_string(),
     }

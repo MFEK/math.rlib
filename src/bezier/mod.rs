@@ -27,25 +27,6 @@ impl Bezier {
         return Self::from_points(p, h1, h2, np);
     }
 
-    pub fn fuse_nearby_handles(&self) -> Bezier
-    {
-        let (w1, mut w2, mut w3, w4) = (self.w1, self.w2, self.w3, self.w4);
-    
-        if self.w1.is_near(self.w2, SMALL_DISTANCE*10000.) {
-            w2 = w1;
-        }
-
-        if self.w3.is_near(self.w4, SMALL_DISTANCE*10000.) {
-            w3 = w4;
-        }
-
-        return Self {
-            w1: w1,
-            w2: w2,
-            w3: w3,
-            w4: w4
-        }
-    }
     pub fn from_points(p0: Vector, p1: Vector, p2: Vector, p3: Vector) -> Self
     {
         return Bezier { w1: p0, w2: p1, w3: p2, w4: p3};
