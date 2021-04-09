@@ -99,25 +99,31 @@ impl GlyphBuilder {
     pub fn arc_to(&mut self, to: Vector, tangent1: Vector, tangent2: Vector)
     {
         let from = self.beziers.last().unwrap().end_point();
-        let _intersection = Self::find_discontinuity_intersection(from, to, tangent1, -tangent2);
         let dot_product = tangent1.dot(tangent2);
-        let normalized_dot_product = (dot_product + 1.)/2.;
         let angle = f64::acos(dot_product);
         let n = f64::abs(consts::TAU/angle);
-        
-        println!("{:?}", dot_product);
-        if let Some(intersection) = _intersection {
-            if intersection.distance(from) < from.distance(to)
-            {
-                let radius = from.distance(to) * (3./6. + (normalized_dot_product) * 3./6.);
-                let dist_along_tangents = radius*(4./3.)*f64::tan(consts::PI/(2. * n));
 
-                let arc = Bezier::from_points(from, from + tangent1 * dist_along_tangents, to + -tangent2 * dist_along_tangents, to);
-                return self.bezier_to(arc);
+        let tangent1_right = Vector{x: tangent1.y, y: -tangent1.x}.normalize();
+        let tangent2_right = Vector{x: tangent2.y, y: -tangent2.x}.normalize();
+
+        let line1 = (from, from + tangent1_right * 2048.);
+        let line2 = (to, to + tangent2_right * 2048.);
+
+        // we shoot rays from the right of both of the tangents to find a center of the circle we're
+        // going to make an arc of
+        let intersection =  line_intersects_line(&line1, &line2);
+
+        let circle_center = match intersection {
+            Some(circle_center) => { 
+                // if the center is very far away or if the tangents are parallel we discard any intersections
+                if circle_center.distance(from) > from.distance(to)*2. { from.lerp(to, 0.5) }
+                else if tangent1.distance(-tangent2) < SMALL_DISTANCE { from.lerp(to, 0.5) }
+                else { circle_center }
             }
-        }
+            None =>{ from.lerp(to, 0.5) } 
+        };
 
-        let radius = from.distance(to) * (3./6. + (normalized_dot_product) * 3./6.);
+        let radius = from.distance(circle_center);
         let dist_along_tangents = radius*(4./3.)*f64::tan(consts::PI/(2. * n));
 
         let arc = Bezier::from_points(
