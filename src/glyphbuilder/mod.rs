@@ -259,8 +259,13 @@ impl GlyphBuilder {
         let normal = vec2!(tangent.y, -tangent.x).normalize();
         let cap_normal = vec2!(cap_tangent.y, -cap_tangent.x).normalize();
 
-        let angle_between = f64::acos(normal.dot(-cap_normal));
-        let rotated_cap = translated_cap.rotate(angle_between);
+        let dot_product = normal.dot(-cap_normal);
+        let angle = {
+            let a = f64::acos(dot_product);
+            if normal.y.is_sign_negative() { -a } else { a }
+        };
+
+        let rotated_cap = translated_cap.rotate(angle);
 
         // finally we translate the cap from 0,0 being the midpoint between the caps first and last points
         // to the mid point between from and to moving from 'cap space' to 'world space'
