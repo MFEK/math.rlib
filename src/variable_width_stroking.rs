@@ -9,7 +9,9 @@ pub struct VWSContour {
     pub handles: Vec<VWSHandle>,
     pub join_type: JoinType,
     pub cap_start_type: CapType,
-    pub cap_end_type: CapType
+    pub cap_end_type: CapType,
+    pub remove_internal: bool,
+    pub remove_external: bool,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -40,6 +42,7 @@ pub enum CapType {
     Custom
 }
 
+#[derive(Debug)]
 pub struct VWSSettings {
     pub cap_custom_start: Option<Glif<Option<PointData>>>,
     pub cap_custom_end: Option<Glif<Option<PointData>>>,
@@ -202,8 +205,12 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
         let left_pw = Piecewise::new(left_line.beziers, None);
         let right_pw = Piecewise::new(right_line.beziers, None);
 
-        out.push(left_pw);
-        out.push(right_pw);
+        if !vws_contour.remove_internal {
+            out.push(left_pw);
+        }
+        if !vws_contour.remove_external {
+            out.push(right_pw);
+        }
         
         return Piecewise::new(out, None);
     }
@@ -356,7 +363,9 @@ pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::El
                 handles: Vec::new(),
                 cap_start_type: cap_start_type,
                 cap_end_type: cap_end_type,
-                join_type: join_type
+                join_type: join_type,
+                remove_internal: false, // TODO: Add these to <lib>
+                remove_external: false,
             };
 
             while let Some(vws_handle) = vws.take_child("handle") {
