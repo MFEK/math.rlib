@@ -60,7 +60,7 @@ fn preprocess_path(in_pw: &Piecewise<Bezier>) -> Piecewise<Bezier>
     for bez in &in_pw.segs {
         let mut new_bez = bez.clone();
 
-        let distance_heuristic = bez.w1.distance(bez.w4)/10.;
+        let distance_heuristic = bez.w1.distance(bez.w4)/12.;
         if bez.w1.distance(bez.w2) < distance_heuristic {
             new_bez.w2 = bez.at(0.40);
         }
@@ -96,26 +96,28 @@ fn fix_path(in_path: GlyphBuilder, closed: bool, join_type: JoinType) -> GlyphBu
         {
             let next_start = next_bezier.start_point();
             let last_end = bezier.end_point();
-            if !last_end.is_near(next_start, SMALL_DISTANCE/2.)
+            if !last_end.is_near(next_start, SMALL_DISTANCE)
             {
                 // the end of our last curve doesn't match up with the start of our next so we need to
                 // deal with the discontinuity be creating a join
+                let from_end_point = bezier.at(1.);
+                let to_start_point = next_bezier.at(0.);
+        
+                // used for round joins
                 let tangent1 = bezier.tangent_at(1.).normalize(); 
                 let tangent2 = next_bezier.tangent_at(0.).normalize();
-                let discontinuity_vec = next_start - last_end;
-                let on_outside = Vector::dot(tangent2, discontinuity_vec) <= 0.;
+        
+                let discontinuity_vec = to_start_point - from_end_point;
+                let dr =  Vector{x: discontinuity_vec.y, y: -discontinuity_vec.x}.normalize();
+        
+                let t1_dot_dr = tangent1.dot(dr);
+                let t2_dot_dr = tangent2.dot(dr);
+                let tangent1= if t1_dot_dr > 0. { tangent1 } else { -tangent1 };
+                let tangent2= if t2_dot_dr < 0. { tangent2 } else { -tangent2 };
+    
                 
-                if !on_outside {
-                    //TODO: implement more complicated joins
-                    out.bezier_to(bezier.clone());
-                    join_to(&mut out, next_start, tangent1, tangent2);
-                }
-                else
-                {
-                    // we're inside so we default to a bevel
-                    out.bezier_to(bezier.clone());
-                    out.line_to(next_start);
-                }
+                out.bezier_to(bezier.clone());
+                join_to(&mut out, next_start, tangent1, tangent2);
             }
             else
             {
@@ -164,6 +166,7 @@ fn fix_path(in_path: GlyphBuilder, closed: bool, join_type: JoinType) -> GlyphBu
 
 pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour, settings: &VWSSettings) -> Piecewise<Piecewise<Bezier>> {
     let in_pw = preprocess_path(in_pw);
+
     let closed = in_pw.is_closed();
     let stroke_handles = &vws_contour.handles;
 
@@ -253,17 +256,25 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
         // path is not closed we need to cap the ends
         let mut out_builder = left_line;
 
-
         let from = out_builder.beziers.last().unwrap().clone();
         let to = right_line.beziers.first().unwrap().clone();
         
+        let from_end_point = from.at(1.);
+        let to_start_point = to.at(0.);
+
         // used for round joins
         let tangent1 = from.tangent_at(1.).normalize(); 
         let tangent2 = -to.tangent_at(0.).normalize();
 
+        let discontinuity_vec = to_start_point - from_end_point;
+        let dr =  Vector{x: discontinuity_vec.y, y: -discontinuity_vec.x}.normalize();
+
+        let tangent1= if tangent1.dot(dr) < 0.9 { dr } else { tangent1 };
+        let tangent2= if tangent2.dot(dr) > -0.9 { -dr } else { tangent2 };
+
         match vws_contour.cap_end_type {
-            CapType::Round => out_builder.arc_to(to.start_point(), tangent1, -tangent2),
-            CapType::Circle => out_builder.circle_arc_to(to.start_point(), tangent1, -tangent2),
+            CapType::Round => out_builder.arc_to(to.start_point(), tangent1, tangent2),
+            CapType::Circle => out_builder.circle_arc_to(to.start_point(), tangent1, tangent2),
             CapType::Square => out_builder.line_to(to.start_point()),
             CapType::Custom => out_builder.cap_to(to.start_point(), settings.cap_custom_end.as_ref().unwrap())
         }
@@ -275,12 +286,22 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
         let from = out_builder.beziers.last().unwrap().clone();
         let to = out_builder.beziers.first().unwrap().clone();
 
+        let from_end_point = from.at(1.);
+        let to_start_point = to.at(0.);
+
+        // used for round joins
         let tangent1 = from.tangent_at(1.).normalize(); 
         let tangent2 = -to.tangent_at(0.).normalize();
 
+        let discontinuity_vec = to_start_point - from_end_point;
+        let dr =  Vector{x: discontinuity_vec.y, y: -discontinuity_vec.x}.normalize();
+
+        let tangent1= if tangent1.dot(dr) < 0.9 { dr } else { tangent1 };
+        let tangent2= if tangent2.dot(dr) > -0.9 { -dr } else { tangent2 };
+
         match vws_contour.cap_start_type {
-            CapType::Round => out_builder.arc_to(to.start_point(), tangent1, -tangent2),
-            CapType::Circle => out_builder.circle_arc_to(to.start_point(), tangent1, -tangent2),
+            CapType::Round => out_builder.arc_to(to.start_point(), tangent1, tangent2),
+            CapType::Circle => out_builder.circle_arc_to(to.start_point(), tangent1, tangent2),
             CapType::Square => out_builder.line_to(to.start_point()),
             CapType::Custom => out_builder.cap_to(to.start_point(), settings.cap_custom_start.as_ref().unwrap())
         }

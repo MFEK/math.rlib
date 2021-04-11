@@ -5,7 +5,7 @@ use super::piecewise::glif::PointData;
 use glifparser::{Glif};
 
 use flo_curves::line::{line_intersects_line};
-use crate::{consts::SMALL_DISTANCE, vec2};
+use crate::{consts::SMALL_DISTANCE, coordinate::Coordinate, vec2};
 
 
 fn vec2_to_rad(vec: Vector) -> f64
@@ -101,8 +101,8 @@ impl GlyphBuilder {
         let from = self.beziers.last().unwrap().end_point();
         let dot_product = tangent1.dot(tangent2);
         let angle = f64::acos(dot_product);
-        let n = f64::abs(consts::TAU/angle);
 
+        let n = f64::abs(consts::TAU/angle);
         let tangent1_right = Vector{x: tangent1.y, y: -tangent1.x}.normalize();
         let tangent2_right = Vector{x: tangent2.y, y: -tangent2.x}.normalize();
 
@@ -118,6 +118,7 @@ impl GlyphBuilder {
                 // if the center is very far away or if the tangents are parallel we discard any intersections
                 if circle_center.distance(from) > from.distance(to)*2. { from.lerp(to, 0.5) }
                 else if tangent1.distance(-tangent2) < SMALL_DISTANCE { from.lerp(to, 0.5) }
+                else if tangent1.distance(tangent2) < SMALL_DISTANCE { from.lerp(to, 0.5) }
                 else { circle_center }
             }
             None =>{ from.lerp(to, 0.5) } 
@@ -151,15 +152,10 @@ impl GlyphBuilder {
 
         let circle_center = match intersection {
             Some(circle_center) => { 
-                if circle_center.distance(from) > from.distance(to)*2. {
+                if tangent1.distance(-tangent2) < SMALL_DISTANCE{
                     from.lerp(to, 0.5)
-                }
-                else{
-                    if tangent1.distance(-tangent2) < SMALL_DISTANCE{
-                        from.lerp(to, 0.5)
-                    } else{
-                        circle_center 
-                    }
+                } else{
+                    circle_center 
                 }
             }
             None =>{
