@@ -99,7 +99,7 @@ impl GlyphBuilder {
     pub fn arc_to(&mut self, to: Vector, tangent1: Vector, tangent2: Vector)
     {
         let from = self.beziers.last().unwrap().end_point();
-        let dot_product = tangent1.dot(tangent2);
+        let dot_product = f64::min(1., f64::max(-1., tangent1.dot(tangent2)));
         let angle = f64::acos(dot_product);
 
         let n = f64::abs(consts::TAU/angle);
@@ -116,8 +116,7 @@ impl GlyphBuilder {
         let circle_center = match intersection {
             Some(circle_center) => { 
                 // if the center is very far away or if the tangents are parallel we discard any intersections
-                if circle_center.distance(from) > from.distance(to)*2. { from.lerp(to, 0.5) }
-                else if tangent1.distance(-tangent2) < SMALL_DISTANCE { from.lerp(to, 0.5) }
+                if tangent1.distance(-tangent2) < SMALL_DISTANCE { from.lerp(to, 0.5) }
                 else if tangent1.distance(tangent2) < SMALL_DISTANCE { from.lerp(to, 0.5) }
                 else { circle_center }
             }
