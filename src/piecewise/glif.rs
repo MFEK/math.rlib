@@ -1,15 +1,15 @@
 use super::{Bezier, Outline, Piecewise, Vector};
-use glifparser::{Contour, PointType, Handle};
+use glifparser::{Contour, Handle, PointType, glif};
 use super::super::consts::SMALL_DISTANCE;
 
 // stub PointData out here, really not sure how I should be handnling this because we need a concrete
 // type to construct our own glif
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct PointData;
 
-impl<T> From<&Outline<T>> for Piecewise<Piecewise<Bezier>>
+impl<PD: glifparser::PointData> From<&Outline<PD>> for Piecewise<Piecewise<Bezier>>
 {
-    fn from(outline: &Outline<T>) -> Self { 
+    fn from(outline: &Outline<PD>) -> Self { 
         let mut new_segs = Vec::new();
 
         for contour in outline
@@ -34,12 +34,12 @@ impl Piecewise<Piecewise<Bezier>> {
     }
 }
 
-impl<T> From<&Contour<T>> for Piecewise<Bezier>
+impl<PD: glifparser::PointData> From<&Contour<PD>> for Piecewise<Bezier>
 {
-    fn from(contour: &Contour<T>) -> Self {
+    fn from(contour: &Contour<PD>) -> Self {
         let mut new_segs = Vec::new();
 
-        let mut lastpoint: Option<&glifparser::Point<T>> = None;
+        let mut lastpoint: Option<&glifparser::Point<PD>> = None;
 
         for point in contour
         {
@@ -63,9 +63,16 @@ impl<T> From<&Contour<T>> for Piecewise<Bezier>
     }
 }
 
+impl<PD: glifparser::PointData> From<Piecewise<Bezier>> for Contour<PD>
+{
+    fn from(pw: Piecewise<Bezier>) -> Self {
+        pw.to_contour()
+    }
+}
+
 impl Piecewise<Bezier> {
-    pub fn to_contour(&self) -> Contour<Option<PointData>> {
-        let mut output_contour: Contour<Option<PointData>> = Vec::new();
+    pub fn to_contour<PD: glifparser::PointData>(&self) -> Contour<PD> {
+        let mut output_contour: Contour<PD> = Vec::new();
         let mut last_curve: Option<[Vector; 4]> = None;
 
         let mut first_point = true;

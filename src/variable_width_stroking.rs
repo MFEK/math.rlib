@@ -1,45 +1,9 @@
+
 use super::{Bezier, Evaluate, Piecewise, Vector, GlyphBuilder};
-use super::consts::{SMALL_DISTANCE};
+use super::consts::SMALL_DISTANCE;
 use super::piecewise::glif::PointData;
-use glifparser::{Glif, Outline};
-
-#[derive(Debug, Clone)]
-pub struct VWSContour {
-    pub id: usize,
-    pub handles: Vec<VWSHandle>,
-    pub join_type: JoinType,
-    pub cap_start_type: CapType,
-    pub cap_end_type: CapType
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum InterpolationType {
-    Linear,
-    Null
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct VWSHandle {
-    pub left_offset: f64,
-    pub right_offset: f64,
-    pub tangent_offset: f64,
-    pub interpolation: InterpolationType
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum JoinType {
-    Bevel,
-    Miter,
-    Round
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum CapType {
-    Round,
-    Square,
-    Custom
-}
-
+use glif::{InterpolationType, VWSHandle};
+use glifparser::{CapType, Glif, JoinType, Outline, VWSContour, glif};
 pub struct VWSSettings {
     pub cap_custom_start: Option<Glif<Option<PointData>>>,
     pub cap_custom_end: Option<Glif<Option<PointData>>>,
@@ -147,13 +111,13 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
         let right_start = cur_handle.right_offset;
 
         let left_end = match cur_handle.interpolation {
-            InterpolationType::Null => left_start,
+            glif::InterpolationType::Null => left_start,
             _ => next_handle.left_offset
         };
 
         
         let right_end = match cur_handle.interpolation {
-            InterpolationType::Null => right_start,
+            glif::InterpolationType::Null => right_start,
             _ => next_handle.right_offset
         };
 
@@ -248,7 +212,7 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
 
 }
 
-pub fn variable_width_stroke_glif<T>(path: &Glif<T>, settings: VWSSettings) -> Glif<Option<PointData>>
+pub fn variable_width_stroke_glif<PD: glifparser::PointData>(path: &Glif<PD>, settings: VWSSettings) -> Glif<Option<PointData>>
 {
     // convert our path and pattern to piecewise collections of beziers
     let piece_path = Piecewise::from(path.outline.as_ref().unwrap());
@@ -282,11 +246,15 @@ pub fn variable_width_stroke_glif<T>(path: &Glif<T>, settings: VWSSettings) -> G
         outline: Some(output_outline),
         order: path.order, // default when only corners
         anchors: path.anchors.clone(),
+        components: path.components.clone(),
         width: path.width,
-        unicode: path.unicode,
+        unicode: path.unicode.clone(),
         name: path.name.clone(),
         format: 2,
-        lib: Some(handles.1)
+        filename: path.filename.clone(),
+        lib: Some(handles.1),
+        private_lib: path.private_lib.clone(),
+        private_lib_root: path.private_lib_root,
     };
 }
 
@@ -301,7 +269,7 @@ pub fn find_vws_contour(id: usize, vws_outline: &Vec<VWSContour>) -> Option<&VWS
     return None;
 }
 
-pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::Element)>
+pub fn parse_vws_lib<PD: glifparser::PointData>(input: &Glif<PD>) -> Option<(Vec<VWSContour>, xmltree::Element)>
 {
     if let Some(lib) = input.lib.as_ref() {
         let mut lib = lib.clone();

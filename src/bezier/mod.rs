@@ -4,7 +4,7 @@ use super::consts::SMALL_DISTANCE;
 
 mod evaluate;
 mod primitive;
-mod flo;
+pub mod flo;
 
 #[derive(Clone, Debug)]
 #[allow(non_snake_case)]

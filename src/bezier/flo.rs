@@ -1,7 +1,6 @@
 use super::super::Vector;
 use flo_curves::bezier::{BezierCurve, BezierCurveFactory};
 use flo_curves::geo::Geo;
-use flo_curves::Coordinate;
 
 use super::Bezier;
 
