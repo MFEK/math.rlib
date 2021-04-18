@@ -255,6 +255,9 @@ pub fn variable_width_stroke_glif<PD: glifparser::PointData>(path: &Glif<PD>, se
         lib: Some(handles.1),
         private_lib: path.private_lib.clone(),
         private_lib_root: path.private_lib_root,
+        guidelines: path.guidelines.clone(),
+        images: path.images.clone(),
+        note: path.note.clone(),
     };
 }
 

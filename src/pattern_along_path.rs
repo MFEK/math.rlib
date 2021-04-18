@@ -239,5 +239,8 @@ pub fn pattern_along_glif<PD: PointData>(path: &Glif<PD>, pattern: &Glif<PD>, se
         lib: None,
         private_lib: path.private_lib.clone(),
         private_lib_root: path.private_lib_root,
+        guidelines: path.guidelines.clone(),
+        images: path.images.clone(),
+        note: path.note.clone(),
     };
 }
