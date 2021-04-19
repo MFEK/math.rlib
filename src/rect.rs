@@ -60,4 +60,12 @@ impl Rect {
         let right_top = Vector{x: other.right, y: other.top};
         return self.encapsulate(left_bottom).encapsulate(right_top)
     }
+
+    pub fn width(&self) -> f64 {
+        f64::abs(self.right - self.left)
+    }
+
+    pub fn height(&self) -> f64 {
+        f64::abs(self.top - self.bottom)
+    }
 }
