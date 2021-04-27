@@ -1,11 +1,6 @@
 use super::{Bezier, Outline, Piecewise, Vector};
-use glifparser::{Contour, PointType, Handle};
+use glifparser::{Contour, Handle, PointType, glif::MFEKPointData};
 use super::super::consts::SMALL_DISTANCE;
-
-// stub PointData out here, really not sure how I should be handnling this because we need a concrete
-// type to construct our own glif
-#[derive(Debug)]
-pub struct PointData;
 
 impl<T> From<&Outline<T>> for Piecewise<Piecewise<Bezier>>
 {
@@ -22,8 +17,8 @@ impl<T> From<&Outline<T>> for Piecewise<Piecewise<Bezier>>
 }
 
 impl Piecewise<Piecewise<Bezier>> {
-    pub fn to_outline(&self) -> Outline<Option<PointData>> {
-        let mut output_outline: Outline<Option<PointData>> = Outline::new();
+    pub fn to_outline(&self) -> Outline<MFEKPointData> {
+        let mut output_outline: Outline<MFEKPointData> = Outline::new();
 
         for contour in &self.segs
         {
@@ -64,8 +59,8 @@ impl<T> From<&Contour<T>> for Piecewise<Bezier>
 }
 
 impl Piecewise<Bezier> {
-    pub fn to_contour(&self) -> Contour<Option<PointData>> {
-        let mut output_contour: Contour<Option<PointData>> = Vec::new();
+    pub fn to_contour(&self) -> Contour<MFEKPointData> {
+        let mut output_contour: Contour<MFEKPointData> = Vec::new();
         let mut last_curve: Option<[Vector; 4]> = None;
 
         let mut first_point = true;

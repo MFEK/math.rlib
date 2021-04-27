@@ -1,7 +1,6 @@
 use std::f64::consts;
 
 use super::{Bezier, Evaluate, Piecewise, Vector, EvalScale, EvalTranslate, EvalRotate};
-use super::piecewise::glif::PointData;
 use glifparser::{Glif};
 
 use flo_curves::line::{line_intersects_line};
@@ -226,7 +225,7 @@ impl GlyphBuilder {
         self.bezier_to(circle_segment);
     }
 
-    pub fn cap_to(&mut self, to: Vector, cap: &Glif<Option<PointData>>)
+    pub fn cap_to<T: glifparser::PointData>(&mut self, to: Vector, cap: &Glif<T>)
     {
         let cap_pw = Piecewise::from(cap.outline.as_ref().unwrap().first().unwrap());
         let from = self.beziers.last().unwrap().end_point();

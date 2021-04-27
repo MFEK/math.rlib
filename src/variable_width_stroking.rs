@@ -1,54 +1,11 @@
 use super::{Bezier, Evaluate, Piecewise, Vector, GlyphBuilder};
 use super::consts::{SMALL_DISTANCE};
-use super::piecewise::glif::PointData;
-use glifparser::{Glif, Outline};
-use skia_safe::luma_color_filter::new;
-
-#[derive(Debug, Clone)]
-pub struct VWSContour {
-    pub id: usize,
-    pub handles: Vec<VWSHandle>,
-    pub join_type: JoinType,
-    pub cap_start_type: CapType,
-    pub cap_end_type: CapType,
-    pub remove_internal: bool,
-    pub remove_external: bool,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum InterpolationType {
-    Linear,
-    Null
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct VWSHandle {
-    pub left_offset: f64,
-    pub right_offset: f64,
-    pub tangent_offset: f64,
-    pub interpolation: InterpolationType
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum JoinType {
-    Bevel,
-    Miter,
-    Round,
-    Circle
-}
-
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum CapType {
-    Round,
-    Square,
-    Circle,
-    Custom
-}
+use glifparser::{Glif, JoinType, Outline, VWSContour, glif::{CapType, InterpolationType, MFEKPointData, VWSHandle}};
 
 #[derive(Debug)]
 pub struct VWSSettings {
-    pub cap_custom_start: Option<Glif<Option<PointData>>>,
-    pub cap_custom_end: Option<Glif<Option<PointData>>>,
+    pub cap_custom_start: Option<Glif<MFEKPointData>>,
+    pub cap_custom_end: Option<Glif<MFEKPointData>>,
 }
 
 // we want to deal with colocated handles here so that we don't get funky results at caps and joins
@@ -312,11 +269,11 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
 
 }
 
-pub fn variable_width_stroke_glif<T>(path: &Glif<T>, settings: VWSSettings) -> Glif<Option<PointData>>
+pub fn variable_width_stroke_glif<U: glifparser::PointData>(path: &Glif<U>, settings: VWSSettings) -> Glif<MFEKPointData>
 {
     // convert our path and pattern to piecewise collections of beziers
     let piece_path = Piecewise::from(path.outline.as_ref().unwrap());
-    let mut output_outline: Outline<Option<PointData>> = Vec::new();
+    let mut output_outline: Outline<MFEKPointData> = Vec::new();
 
     let handles = parse_vws_lib(path);
 
@@ -347,10 +304,17 @@ pub fn variable_width_stroke_glif<T>(path: &Glif<T>, settings: VWSSettings) -> G
         order: path.order, // default when only corners
         anchors: path.anchors.clone(),
         width: path.width,
-        unicode: path.unicode,
+        unicode: path.unicode.clone(),
         name: path.name.clone(),
         format: 2,
-        lib: Some(handles.1)
+        lib: Some(handles.1),
+        components: path.components.clone(),
+        guidelines: path.guidelines.clone(),
+        images: path.images.clone(),
+        note: path.note.clone(),
+        filename: path.filename.clone(),
+        private_lib: path.private_lib.clone(),
+        private_lib_root: path.private_lib_root,
     };
 }
 
@@ -365,7 +329,7 @@ pub fn find_vws_contour(id: usize, vws_outline: &Vec<VWSContour>) -> Option<&VWS
     return None;
 }
 
-pub fn parse_vws_lib<T>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::Element)>
+pub fn parse_vws_lib<T: glifparser::PointData>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::Element)>
 {
     if let Some(lib) = input.lib.as_ref() {
         let mut lib = lib.clone();
