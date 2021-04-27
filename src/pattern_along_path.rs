@@ -1,9 +1,8 @@
 use super::{ArcLengthParameterization, Bezier, Evaluate, EvalScale, EvalTranslate, Parameterization, Piecewise, Vector};
-use super::piecewise::glif::PointData;
 use super::coordinate::Coordinate2D;
 use crate::vec2;
 
-use glifparser::{Glif, Outline};
+use glifparser::{Glif, Outline, glif::MFEKPointData};
 use skia_safe::{path, Path};
 
 pub struct PatternSettings {
@@ -202,13 +201,13 @@ fn pattern_along_path<T: Evaluate<EvalResult = Vector>>(path: &Piecewise<T>, pat
     return Piecewise::new(output_segments, None);
 }
 
-pub fn pattern_along_glif<U>(path: &Glif<U>, pattern: &Glif<Option<PointData>>, settings: &PatternSettings) -> Glif<Option<PointData>>
+pub fn pattern_along_glif<U: glifparser::PointData>(path: &Glif<U>, pattern: &Glif<U>, settings: &PatternSettings) -> Glif<MFEKPointData>
 {
     // convert our path and pattern to piecewise collections of beziers
     let piece_path = Piecewise::from(path.outline.as_ref().unwrap());
     let piece_pattern = Piecewise::from(pattern.outline.as_ref().unwrap());
 
-    let mut output_outline: Outline<Option<PointData>> = Vec::new();
+    let mut output_outline: Outline<MFEKPointData> = Vec::new();
 
 
     for contour in piece_path.segs {
@@ -232,9 +231,16 @@ pub fn pattern_along_glif<U>(path: &Glif<U>, pattern: &Glif<Option<PointData>>, 
         order: path.order, // default when only corners
         anchors: path.anchors.clone(),
         width: path.width,
-        unicode: path.unicode,
+        unicode: path.unicode.clone(),
         name: path.name.clone(),
         format: 2,
-        lib: None
+        lib: None,
+        components: path.components.clone(),
+        guidelines: path.guidelines.clone(),
+        images: path.images.clone(),
+        note: path.note.clone(),
+        filename: path.filename.clone(),
+        private_lib: path.private_lib.clone(),
+        private_lib_root: path.private_lib_root,
     };
 }
