@@ -2,7 +2,7 @@ use super::{Bezier, Outline, Piecewise, Vector};
 use glifparser::{Contour, Handle, PointType, glif::MFEKPointData};
 use super::super::consts::SMALL_DISTANCE;
 
-impl<T> From<&Outline<T>> for Piecewise<Piecewise<Bezier>>
+impl<T: glifparser::PointData> From<&Outline<T>> for Piecewise<Piecewise<Bezier>>
 {
     fn from(outline: &Outline<T>) -> Self { 
         let mut new_segs = Vec::new();
@@ -29,7 +29,7 @@ impl Piecewise<Piecewise<Bezier>> {
     }
 }
 
-impl<T> From<&Contour<T>> for Piecewise<Bezier>
+impl<T: glifparser::PointData> From<&Contour<T>> for Piecewise<Bezier>
 {
     fn from(contour: &Contour<T>) -> Self {
         let mut new_segs = Vec::new();
