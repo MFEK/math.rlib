@@ -11,6 +11,7 @@ pub mod evaluate;
 pub mod parameterization;
 pub mod coordinate;
 pub mod interpolator;
+pub mod glif;
 pub mod glyphbuilder;
 pub mod variable_width_stroking;
 pub mod pattern_along_path;
