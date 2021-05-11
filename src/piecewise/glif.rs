@@ -1,5 +1,5 @@
 use super::{Bezier, Outline, Piecewise, Vector};
-use glifparser::{Contour, Handle, PointType, glif::MFEKPointData};
+use glifparser::{Contour, Handle, PointType, glif::{MFEKContour, MFEKOutline, MFEKPointData}};
 use super::super::consts::SMALL_DISTANCE;
 
 impl<T: glifparser::PointData> From<&Outline<T>> for Piecewise<Piecewise<Bezier>>
@@ -13,6 +13,27 @@ impl<T: glifparser::PointData> From<&Outline<T>> for Piecewise<Piecewise<Bezier>
         }
     
         return Piecewise::new(new_segs, None);
+    }
+}
+
+impl<T: glifparser::PointData> From<&MFEKOutline<T>> for Piecewise<Piecewise<Bezier>>
+{
+    fn from(outline: &MFEKOutline<T>) -> Self { 
+        let mut new_segs = Vec::new();
+
+        for contour in outline
+        {
+            new_segs.push(Piecewise::from(contour));
+        }
+    
+        return Piecewise::new(new_segs, None);
+    }
+}
+
+impl<T: glifparser::PointData> From<MFEKOutline<T>> for Piecewise<Piecewise<Bezier>>
+{
+    fn from(outline: MFEKOutline<T>) -> Self { 
+        return outline.into();
     }
 }
 
@@ -55,6 +76,20 @@ impl<T: glifparser::PointData> From<&Contour<T>> for Piecewise<Bezier>
         }
 
         return Piecewise::new(new_segs, None);
+    }
+}
+
+impl<T: glifparser::PointData> From<&MFEKContour<T>> for Piecewise<Bezier>
+{
+    fn from(contour: &MFEKContour<T>) -> Self {
+        return Piecewise::from(&contour.inner);
+    }
+}
+
+impl<T: glifparser::PointData> From<MFEKContour<T>> for Piecewise<Bezier>
+{
+    fn from(contour: MFEKContour<T>) -> Self {
+        return Piecewise::from(&contour.inner);
     }
 }
 
