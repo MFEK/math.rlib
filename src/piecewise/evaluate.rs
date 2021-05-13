@@ -3,7 +3,6 @@ use super::rect::*;
 use super::bezier::*;
 use super::piecewise::*;
 use super::super::evaluate::*;
-use rayon::prelude::*;
 
 // Implements the evaluate trait for Piecewise
 impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
