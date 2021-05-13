@@ -88,7 +88,7 @@ impl<T: Evaluate> Piecewise<T> {
 }
 
 // TODO: Move these functions to a more appropriate submodule.
-impl<T: Evaluate<EvalResult = Vector>+Primitive> Piecewise<Piecewise<T>>
+impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+ Sync> Piecewise<Piecewise<T>>
 {
     // we split the primitive that contains t at t
     pub fn subdivide(&self, t: f64) -> Self
@@ -124,7 +124,7 @@ impl Piecewise<Bezier> {
     }
 }
 
-impl<T: Evaluate<EvalResult = Vector>+Primitive> Piecewise<T>
+impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+Sync> Piecewise<T>
 {    
 
     pub fn is_closed(&self) -> bool

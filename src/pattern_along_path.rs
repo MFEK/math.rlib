@@ -2,7 +2,7 @@ use super::{ArcLengthParameterization, Bezier, Evaluate, EvalScale, EvalTranslat
 use super::coordinate::Coordinate2D;
 use crate::vec2;
 
-use glifparser::{Glif, Outline, glif::MFEKPointData};
+use glifparser::{Glif, Outline, glif::{MFEKPointData, PAPContour, PatternCopies, PatternSubdivide}};
 use skia_safe::{path, Path};
 
 pub struct PatternSettings {
@@ -16,28 +16,6 @@ pub struct PatternSettings {
     pub tangent_offset: f64,
     pub pattern_scale: Vector,
     pub center_pattern: bool
-}
-
-pub enum PatternCopies {
-    Single,
-    Repeated,
-    Fixed(usize) // TODO: Implement
-}
-
-// pff - no splitting
-// simple - split each curve at it's midpoint
-// angle - split the input pattern each x degrees in change in direction on the path
-pub enum PatternSubdivide {
-    Off,
-    Simple(usize), // The value here is how many times we'll subdivide simply
-    //Angle(f64) TODO: Implement.
-}
-
-
-pub enum PatternHandleDiscontinuity {
-    Off, // no handling
-    Split(f64) 
-    // Cut TODO: implement
 }
 
 // This takes our pattern settings and translate/splits/etc our input pattern in preparation of the main algorithm. This is essentially so we don't need to keep track of offsets
@@ -147,7 +125,7 @@ fn prepare_pattern<T: Evaluate<EvalResult = Vector>>(path: &Piecewise<T>, patter
 // The inkscape implemnetation seems to be very similar to the algorithm described above. The aim is that this implementation gives
 // comparable outputs to inkscape's.
 #[allow(non_snake_case)]
-fn pattern_along_path<T: Evaluate<EvalResult = Vector>>(path: &Piecewise<T>, pattern: &Piecewise<Piecewise<Bezier>>, settings: &PatternSettings) -> Piecewise<Piecewise<Bezier>>
+fn pattern_along_path<T: Evaluate<EvalResult = Vector>+Send+Sync>(path: &Piecewise<T>, pattern: &Piecewise<Piecewise<Bezier>>, settings: &PatternSettings) -> Piecewise<Piecewise<Bezier>>
 {
     // we're gonna parameterize the input path such that 0-1 = 0 -> totalArcLength
     // this is important because samples will be spaced equidistant along the input path
@@ -199,6 +177,24 @@ fn pattern_along_path<T: Evaluate<EvalResult = Vector>>(path: &Piecewise<T>, pat
     }
 
     return Piecewise::new(output_segments, None);
+}
+
+pub fn pattern_along_path_mfek<T: Evaluate<EvalResult = Vector>+Send+Sync>(path: &Piecewise<T>, settings: &PAPContour) -> Piecewise<Piecewise<Bezier>>
+{
+    let split_settings = PatternSettings {
+        copies: settings.copies.clone(),
+        subdivide: settings.subdivide.clone(),
+        is_vertical: settings.is_vertical,
+        stretch: settings.stretch,
+        spacing: settings.spacing,
+        simplify: settings.simplify,
+        normal_offset: settings.normal_offset,
+        tangent_offset: settings.tangent_offset,
+        pattern_scale: Vector{ x: settings.pattern_scale.0, y: settings.pattern_scale.1},
+        center_pattern: settings.center_pattern
+    };
+
+    pattern_along_path(path, &(&settings.pattern).into(), &split_settings)
 }
 
 pub fn pattern_along_glif<U: glifparser::PointData>(path: &Glif<U>, pattern: &Glif<U>, settings: &PatternSettings) -> Glif<MFEKPointData>
