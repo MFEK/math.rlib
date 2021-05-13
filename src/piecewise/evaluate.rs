@@ -3,9 +3,10 @@ use super::rect::*;
 use super::bezier::*;
 use super::piecewise::*;
 use super::super::evaluate::*;
+use rayon::prelude::*;
 
 // Implements the evaluate trait for Piecewise
-impl<T: Evaluate> Evaluate for Piecewise<T> {
+impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
     type EvalResult = T::EvalResult;
 
     // return the x, y of our curve at time t
@@ -71,12 +72,11 @@ impl<T: Evaluate> Evaluate for Piecewise<T> {
         return output;
     }
 
-    fn apply_transform<F>(&self, transform: F) -> Self where F: Fn(&Self::EvalResult) -> Self::EvalResult
+    fn apply_transform<F: Send+Sync>(&self, transform: F) -> Self where F: Fn(&Self::EvalResult) -> Self::EvalResult
     {
-        let mut output = Vec::new();
-        for contour in &self.segs {
-            output.push(contour.apply_transform(&transform));
-        }
+        let output = self.segs.iter().map(|contour| {
+            contour.apply_transform(&transform)
+        }).collect();
 
         return Piecewise::new(output, Some(self.cuts.clone()))
     }

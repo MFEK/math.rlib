@@ -26,6 +26,7 @@ pub use self::arclenparameterization::ArcLengthParameterization;
 pub use self::glyphbuilder::GlyphBuilder;
 
 pub use self::variable_width_stroking::*;
+pub use self::pattern_along_path::*;
 
 pub use self::evaluate::Evaluate;
 pub use self::evaluate::{EvalScale, EvalRotate, EvalTranslate};

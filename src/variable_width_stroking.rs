@@ -320,13 +320,7 @@ pub fn variable_width_stroke_glif<U: glifparser::PointData>(path: &Glif<U>, sett
 
 pub fn find_vws_contour(id: usize, vws_outline: &Vec<VWSContour>) -> Option<&VWSContour>
 {
-    for contour in vws_outline {
-        if contour.id == id {
-            return Some(contour);
-        }
-    }
-
-    return None;
+    return vws_outline.get(id);
 }
 
 pub fn parse_vws_lib<T: glifparser::PointData>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::Element)>
@@ -383,7 +377,6 @@ pub fn parse_vws_lib<T: glifparser::PointData>(input: &Glif<T>) -> Option<(Vec<V
             };
 
             let mut vws_handles = VWSContour {
-                id: name.parse().unwrap(),
                 handles: Vec::new(),
                 cap_start_type: cap_start_type,
                 cap_end_type: cap_end_type,
@@ -471,7 +464,6 @@ pub fn generate_vws_lib(vwscontours:  &Vec<VWSContour>) -> Option<xmltree::Eleme
 
     for vwcontour in vwscontours {
         let mut vws_node = xmltree::Element::new("vws");
-         vws_node.attributes.insert("id".to_owned(), vwcontour.id.to_string());
          vws_node.attributes.insert("cap_start".to_owned(), cap_type_to_string(vwcontour.cap_start_type));
          vws_node.attributes.insert("cap_end".to_owned(), cap_type_to_string(vwcontour.cap_end_type));
          vws_node.attributes.insert("join".to_owned(), join_type_to_string(vwcontour.join_type));

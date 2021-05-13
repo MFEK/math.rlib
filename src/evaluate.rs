@@ -10,11 +10,11 @@ use crate::vec2;
 // Could probably use a better name. Maybe Primitive as they're the building blocks of our glyph.
 pub trait Evaluate
 {
-    type EvalResult: Coordinate;
+    type EvalResult: Coordinate+Send+Sync;
     fn at(&self, t: f64) -> Self::EvalResult; 
     fn tangent_at(&self, u: f64) -> Self::EvalResult;
     fn bounds(&self) -> Rect; // returns an AABB that contains all points 
-    fn apply_transform<F>(&self, transform: F) -> Self where F: Fn(&Self::EvalResult) -> Self::EvalResult;
+    fn apply_transform<F: Send+Sync>(&self, transform: F) -> Self where F: Fn(&Self::EvalResult) -> Self::EvalResult;
     fn start_point(&self) -> Self::EvalResult;
     fn end_point(&self) -> Self::EvalResult;
 }
@@ -31,7 +31,7 @@ pub trait EvalRotate: Evaluate {
     fn rotate(&self, angle: f64) -> Self;
 }
 
-impl<T: Evaluate> EvalTranslate for T{
+impl<T: Evaluate+Send+Sync> EvalTranslate for T{
     fn translate(&self, t: T::EvalResult) -> Self
     {
         let transform = |v: &T::EvalResult| {
