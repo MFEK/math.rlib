@@ -9,6 +9,6 @@ edition = "2018"
 [dependencies]
 skia-safe = "0"
 flo_curves = { git = "https://github.com/MFEK/flo_curves", branch = "master" }
-glifparser = { git = "https://github.com/MFEK/glifparser.rlib", branch = "mfek",  features=["skia", "mfek"] }
+glifparser = { git = "https://github.com/MFEK/glifparser.rlib", branch = "master",  features=["skia", "mfek"] }
 xmltree = "0.10"
 xmlwriter = "0.1.0"
