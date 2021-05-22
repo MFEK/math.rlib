@@ -1,6 +1,6 @@
 use super::vector::Vector;
 use glifparser::{WhichHandle};
-use super::consts::SMALL_DISTANCE;
+
 
 mod evaluate;
 mod primitive;

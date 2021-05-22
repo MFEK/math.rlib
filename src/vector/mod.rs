@@ -3,7 +3,6 @@ mod glif;
 mod flo;
 
 use super::coordinate::Coordinate;
-use super::coordinate::Coordinate2D;
 
 #[derive(Clone, Copy, Debug)]
 pub struct Vector {

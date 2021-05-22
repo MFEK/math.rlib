@@ -1,9 +1,8 @@
 use super::{ArcLengthParameterization, Bezier, Evaluate, EvalScale, EvalTranslate, Parameterization, Piecewise, Vector};
-use super::coordinate::Coordinate2D;
 use crate::vec2;
 
 use glifparser::{Glif, Outline, glif::{MFEKPointData, PAPContour, PatternCopies, PatternSubdivide}};
-use skia_safe::{path, Path};
+use skia_safe::{Path};
 
 pub struct PatternSettings {
     pub copies: PatternCopies,
@@ -22,7 +21,7 @@ pub struct PatternSettings {
 // and such during the main algorithm. We prepare our input in 'curve space'. In this space 0 on the y-axis will fall onto a point on the path. A value greater or less than 0 represents offset
 // vertically from the path. The x axis represents it's travel along the arclength of the path. Once this is done the main function can naively loop over all the Piecewises in the output
 // vec without caring about any options except normal/tangent offset.
-fn prepare_pattern<T: Evaluate<EvalResult = Vector>>(path: &Piecewise<T>, pattern: &Piecewise<Piecewise<Bezier>>, arclenparam: &ArcLengthParameterization, settings: &PatternSettings) -> Vec<Piecewise<Piecewise<Bezier>>>
+fn prepare_pattern<T: Evaluate<EvalResult = Vector>>(_path: &Piecewise<T>, pattern: &Piecewise<Piecewise<Bezier>>, arclenparam: &ArcLengthParameterization, settings: &PatternSettings) -> Vec<Piecewise<Piecewise<Bezier>>>
 {
     let mut output: Vec<Piecewise<Piecewise<Bezier>>> = Vec::new();
 
@@ -48,7 +47,7 @@ fn prepare_pattern<T: Evaluate<EvalResult = Vector>>(path: &Piecewise<T>, patter
     // if we've got a simple split we just do that now 
     match settings.subdivide {
         PatternSubdivide::Simple(times) => {
-            for n in 0..times {
+            for _n in 0..times {
                 working_pattern = working_pattern.subdivide(0.5);
             }
         }
@@ -97,7 +96,7 @@ fn prepare_pattern<T: Evaluate<EvalResult = Vector>>(path: &Piecewise<T>, patter
                 stretch_len = left_over/copies as f64;
                 // now we divide the length by the pattern width and get a fraction which we add to scale
                 working_pattern = working_pattern.scale(vec2!(1. + stretch_len as f64, 1.));
-                let b = working_pattern.bounds();
+                let _b = working_pattern.bounds();
             }
 
             for n in 0..copies {
@@ -105,7 +104,7 @@ fn prepare_pattern<T: Evaluate<EvalResult = Vector>>(path: &Piecewise<T>, patter
             }
         }
 
-        PatternCopies::Fixed(n) => {
+        PatternCopies::Fixed(_n) => {
             // TODO: Implement
         }
     }

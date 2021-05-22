@@ -1,4 +1,4 @@
-use consts::SMALL_T_DISTANCE;
+
 use glifparser::*;
 
 pub mod glif;
@@ -41,7 +41,7 @@ impl<T: Evaluate> Piecewise<T> {
                 let seg_iter = segs.iter().enumerate().peekable();
                 let seg_len = segs.len();
 
-                for (i, seg) in seg_iter {
+                for (i, _seg) in seg_iter {
                     out_cuts.push((i+1) as f64 / seg_len as f64);
                 }
 

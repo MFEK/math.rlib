@@ -4,9 +4,10 @@ use super::{Bezier, Evaluate, Piecewise, Vector, EvalScale, EvalTranslate, EvalR
 use glifparser::{Glif};
 
 use flo_curves::line::{line_intersects_line};
-use crate::{consts::SMALL_DISTANCE, coordinate::Coordinate, vec2};
+use crate::{consts::SMALL_DISTANCE, vec2};
 
 
+#[allow(unused)]
 fn vec2_to_rad(vec: Vector) -> f64
 {
     return f64::atan2(vec.y, vec.x);
@@ -20,9 +21,11 @@ fn normalize_angle(angle: f64) -> f64
 
     angle
 }
+
+#[allow(unused)]
 fn delta_angle(start: f64, end: f64, direction: f64) -> f64
 {
-    let mut difference = if direction == 1. {
+    let difference = if direction == 1. {
         start - end
     } else {
         end - start

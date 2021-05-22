@@ -16,7 +16,7 @@ impl Evaluate for Interpolator
 
     // Everything below this point should probably be moved into it's own trait sometime soon because
     // these functions don't exactly make sense here.
-    fn tangent_at(&self, t: f64) -> f64
+    fn tangent_at(&self, _t: f64) -> f64
     {
         return 0.;
     }

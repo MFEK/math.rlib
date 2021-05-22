@@ -1,6 +1,6 @@
 use super::{Bezier, Outline, Piecewise, Vector};
 use glifparser::{Contour, Handle, PointType, glif::{MFEKContour, MFEKOutline, MFEKPointData}};
-use super::super::consts::SMALL_DISTANCE;
+
 
 impl<T: glifparser::PointData> From<&Outline<T>> for Piecewise<Piecewise<Bezier>>
 {

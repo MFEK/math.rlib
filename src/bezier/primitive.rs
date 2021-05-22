@@ -1,7 +1,7 @@
 use super::Bezier;
 use super::Vector;
 use super::super::evaluate::Primitive;
-use super::super::consts::SMALL_DISTANCE;
+
 
 impl Primitive for Bezier {
     // returns two curves one before t and one after

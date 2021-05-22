@@ -14,7 +14,7 @@ pub enum InterpolationType {
 }
 
 impl Interpolator {
-    fn interpolate_none(&self, t: f64) -> f64 {
+    fn interpolate_none(&self, _t: f64) -> f64 {
         return self.start;
     }
 

@@ -1,6 +1,6 @@
-use super::vector::*;
+
 use super::rect::*;
-use super::bezier::*;
+
 use super::piecewise::*;
 use super::super::evaluate::*;
 

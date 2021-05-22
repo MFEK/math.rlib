@@ -1,5 +1,4 @@
 #![allow(non_snake_case)] // for our name MFEKmath
-#![feature(let_chains)]
 
 pub mod vector;
 pub mod piecewise;

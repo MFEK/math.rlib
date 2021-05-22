@@ -1,8 +1,8 @@
 use super::super::{Vector, Evaluate, Rect, Bezier};
-use super::super::consts::SMALL_DISTANCE;
+
 use flo_curves::BezierCurve;
 
-use flo_curves::bezier::{derivative4, de_casteljau3, de_casteljau4, characterize_curve};
+use flo_curves::bezier::{derivative4, de_casteljau3, de_casteljau4};
 
 impl Evaluate for Bezier {
     type EvalResult = Vector;

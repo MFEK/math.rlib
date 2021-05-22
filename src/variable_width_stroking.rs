@@ -330,7 +330,7 @@ pub fn parse_vws_lib<T: glifparser::PointData>(input: &Glif<T>) -> Option<(Vec<V
         let mut vws_outline = Vec::new();
 
         while let Some(mut vws) = lib.take_child("vws") {
-            let name = vws
+            let _name = vws
                 .attributes
                 .get("id")
                 .expect("VWSContour must have an id");
