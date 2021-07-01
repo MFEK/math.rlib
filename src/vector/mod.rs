@@ -80,10 +80,6 @@ impl Vector {
             y: (1. - t) * v0.y + t * v1.y
         }
     }
-
-    pub fn angle(self, v1: Vector) -> f64 {
-        return f64::atan2(v1.y, v1.x) - atan2(self.y, self.x);
-    }
 }
 
 impl std::cmp::PartialEq for Vector {
