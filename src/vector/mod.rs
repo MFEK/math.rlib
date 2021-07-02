@@ -23,6 +23,10 @@ impl Vector {
         Vector{ x: x, y: y }
     }
 
+    pub fn to_tuple(self) -> (f32, f32) {
+        return (self.x as f32, self.y as f32);
+    }
+
     pub fn is_near(self, v1: Vector, eps: f64) -> bool
     {
         self.x - v1.x <= eps && self.x - v1.x >= -eps &&
@@ -78,6 +82,23 @@ impl Vector {
             x: (1. - t) * v0.x + t * v1.x,
             y: (1. - t) * v0.y + t * v1.y
         }
+    }
+
+    pub fn angle(self, v1: Vector) -> f64 {
+        return f64::atan2(v1.y, v1.x) - f64::atan2(self.y, self.x);
+    }
+
+    pub fn rotate(self, pivot: Vector, angle: f64) -> Vector {
+        let s = f64::sin(angle);
+        let c = f64::cos(angle);
+
+        let translated_point = self - pivot;
+        let rotated_point = Vector {
+            x: translated_point.x * c - translated_point.y * s,
+            y: translated_point.x * s + translated_point.y * c,
+        };
+
+        return rotated_point + pivot;
     }
 }
 
