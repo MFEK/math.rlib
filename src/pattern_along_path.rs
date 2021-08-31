@@ -1,14 +1,15 @@
 use super::{ArcLengthParameterization, Bezier, Evaluate, EvalScale, EvalTranslate, Parameterization, Piecewise, Vector};
 use crate::vec2;
 
-use glifparser::{Glif, Outline, glif::{MFEKPointData, PAPContour, PatternCopies, PatternSubdivide}};
+use glifparser::{Glif, Outline, glif::{MFEKPointData, PAPContour, PatternCopies, PatternSubdivide, PatternStretch}};
 use skia_safe::{Path};
 
+#[derive(Debug, Clone)]
 pub struct PatternSettings {
     pub copies: PatternCopies,
     pub subdivide: PatternSubdivide,
     pub is_vertical: bool, // TODO: Implement this. Might replace it with a general rotation parameter to make it more useful.
-    pub stretch: bool,
+    pub stretch: PatternStretch,
     pub spacing: f64,
     pub simplify: bool,
     pub normal_offset: f64,
@@ -17,8 +18,7 @@ pub struct PatternSettings {
     pub center_pattern: bool
 }
 
-// This takes our pattern settings and translate/splits/etc our input pattern in preparation of the main algorithm. This is essentially so we don't need to keep track of offsets
-// and such during the main algorithm. We prepare our input in 'curve space'. In this space 0 on the y-axis will fall onto a point on the path. A value greater or less than 0 represents offset
+// This takes our pattern settings and translate/splits/etc our input pattern in preparation of the main algorithm. We prepare our input in 'curve space'. In this space 0 on the y-axis will fall onto a point on the path. A value greater or less than 0 represents offset
 // vertically from the path. The x axis represents it's travel along the arclength of the path. Once this is done the main function can naively loop over all the Piecewises in the output
 // vec without caring about any options except normal/tangent offset.
 fn prepare_pattern<T: Evaluate<EvalResult = Vector>>(_path: &Piecewise<T>, pattern: &Piecewise<Piecewise<Bezier>>, arclenparam: &ArcLengthParameterization, settings: &PatternSettings) -> Vec<Piecewise<Piecewise<Bezier>>>
@@ -68,13 +68,13 @@ fn prepare_pattern<T: Evaluate<EvalResult = Vector>>(_path: &Piecewise<T>, patte
             // if we have the stretch option enabled we respect the spacing setting, otherwise it doesn't really
             // make sense for a single copy
             let mut single_width = total_width;
-            if !settings.stretch { single_width = pattern_width }
+            if settings.stretch == PatternStretch::On { single_width = pattern_width }
 
             // can we fit a copy of our pattern on this path?
             if f64::floor(total_arclen/single_width) > 0. {
                 let mut single = working_pattern;
 
-                if settings.stretch {
+                if settings.stretch == PatternStretch::On {
                     let stretch_len = total_arclen - single_width;
                     single = single.scale(vec2!(1. + stretch_len/pattern_width, 1.));
                 }
@@ -86,21 +86,29 @@ fn prepare_pattern<T: Evaluate<EvalResult = Vector>>(_path: &Piecewise<T>, patte
         PatternCopies::Repeated => {
             // we divide the total arc-length by our pattern's width and then floor it to the nearest integer
             // and this gives us the total amount of whole copies that could fit along this path
-            let copies = (total_arclen/total_width) as usize;
+            let copies = (total_arclen/total_width) as i32;
             let left_over = total_arclen/total_width - copies as f64;
+            let mut additional_spacing = 0.;
 
 
             let mut stretch_len = 0.;
-            if settings.stretch { 
-                // divide that by the number of copies and now we've got how much we should stretch each
-                stretch_len = left_over/copies as f64;
-                // now we divide the length by the pattern width and get a fraction which we add to scale
-                working_pattern = working_pattern.scale(vec2!(1. + stretch_len as f64, 1.));
-                let _b = working_pattern.bounds();
+
+            match settings.stretch {
+                PatternStretch::On => {
+                    // divide that by the number of copies and now we've got how much we should stretch each
+                    stretch_len = left_over/copies as f64;
+                    // now we divide the length by the pattern width and get a fraction which we add to scale
+                    working_pattern = working_pattern.scale(vec2!(1. + stretch_len as f64, 1.));
+                },
+                PatternStretch::Spacing => {
+                    // divide that by the number of copies and now we've got how much we should stretch each
+                    additional_spacing = left_over as f64;
+                },
+                PatternStretch::Off => {}
             }
 
             for n in 0..copies {
-                output.push(working_pattern.translate(vec2!(n as f64 * total_width + n as f64 * stretch_len * pattern_width, 0.)));
+                output.push(working_pattern.translate(vec2!(n as f64 * total_width + n as f64 * stretch_len * pattern_width + n as f64 * additional_spacing, 0.)));
             }
         }
 
@@ -236,6 +244,6 @@ pub fn pattern_along_glif<U: glifparser::PointData>(path: &Glif<U>, pattern: &Gl
         note: path.note.clone(),
         filename: path.filename.clone(),
         private_lib: path.private_lib.clone(),
-        ..Glif::default()
+        private_lib_root: "MFEK",
     };
 }
