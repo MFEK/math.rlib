@@ -102,7 +102,7 @@ fn prepare_pattern<T: Evaluate<EvalResult = Vector>>(_path: &Piecewise<T>, patte
                 },
                 PatternStretch::Spacing => {
                     // divide that by the number of copies and now we've got how much we should stretch each
-                    additional_spacing = left_over as f64;
+                    additional_spacing = left_over/copies as f64 * pattern_bounds.right;
                 },
                 PatternStretch::Off => {}
             }
