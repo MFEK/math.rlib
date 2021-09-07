@@ -10,22 +10,19 @@ pub struct ArcLengthParameterization
 
 impl ArcLengthParameterization
 {
-    pub fn from<T: Evaluate>(evaluable: &T) -> Self
+    /// An evaluable and an accuracy value which defines how many lines we use to measure length.
+    pub fn from<T: Evaluate>(evaluable: &T, accuracy: i32) -> Self
     {
         let mut output = Vec::new();
-        // TODO: this is an arbitrary number and should be replaced with something more robust
-        // TODO: preferably a tolerance value
-        let arclen_cuts = 10000;
-        let max_cuts = 10000 + 1;
 
         let mut prev_point = evaluable.at(0.0);
         let mut sum = 0.0;
         output.push(sum);
         
         let mut i = 1;
-        while i < max_cuts
+        while i < accuracy + 1
         {
-            let t = i as f64 / arclen_cuts as f64;
+            let t = i as f64 / accuracy as f64;
             let point = evaluable.at(t);
             let dist = point.distance(prev_point);
             sum = sum + dist;
@@ -71,6 +68,18 @@ impl ArcLengthParameterization
 
         // This needs to be replaced with success/failure.
         panic!("Couldn't find the target arc length!")
+    }
+
+    pub fn get_arclen_from_t(&self, t: f64) -> f64 {
+        let fractional_index = t * (self.arclens.len()-1) as f64;
+        let index = fractional_index as usize;
+        let fraction = fractional_index - index as f64;
+
+        let len_start = self.arclens[index];
+        let len_end = if index != self.arclens.len() - 1 {self.arclens[index+1]} else {1.};
+        let segment_len = len_start - len_end;
+
+        return len_start + segment_len * fraction;
     }
 }
 

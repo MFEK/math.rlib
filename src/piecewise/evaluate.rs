@@ -22,7 +22,6 @@ impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
         let offset_time = modified_time - curve_index as f64;
         */
 
-        
         let curve_index = self.seg_n(t);
         let offset_time = self.seg_t(t);
 

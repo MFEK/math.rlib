@@ -1,9 +1,11 @@
-use super::{ArcLengthParameterization, Bezier, Evaluate, EvalScale, EvalTranslate, Parameterization, Piecewise, Vector};
+use super::{ArcLengthParameterization, Bezier, Evaluate, EvalScale, EvalTranslate, Parameterization, Piecewise, Vector, Rect};
 use crate::vec2;
 
+use flo_curves::bezier::solve_curve_for_t;
 use glifparser::{Glif, Outline, glif::{MFEKPointData, PAPContour, PatternCopies, PatternSubdivide, PatternStretch}};
 use skia_safe::{Path};
 
+// At some point soon I want to restructure this algorithm. The current two pass 
 #[derive(Debug, Clone)]
 pub struct PatternSettings {
     pub copies: PatternCopies,
@@ -15,13 +17,16 @@ pub struct PatternSettings {
     pub normal_offset: f64,
     pub tangent_offset: f64,
     pub pattern_scale: Vector,
-    pub center_pattern: bool
+    pub center_pattern: bool,
+    pub cull_overlap: f64,
+    pub two_pass_culling: bool,
 }
 
 // This takes our pattern settings and translate/splits/etc our input pattern in preparation of the main algorithm. We prepare our input in 'curve space'. In this space 0 on the y-axis will fall onto a point on the path. A value greater or less than 0 represents offset
 // vertically from the path. The x axis represents it's travel along the arclength of the path. Once this is done the main function can naively loop over all the Piecewises in the output
 // vec without caring about any options except normal/tangent offset.
-fn prepare_pattern<T: Evaluate<EvalResult = Vector>>(_path: &Piecewise<T>, pattern: &Piecewise<Piecewise<Bezier>>, arclenparam: &ArcLengthParameterization, settings: &PatternSettings) -> Vec<Piecewise<Piecewise<Bezier>>>
+fn prepare_pattern(pattern: &Piecewise<Piecewise<Bezier>>, arclenparam: &ArcLengthParameterization, settings: &PatternSettings) 
+    ->  Vec<Piecewise<Piecewise<Bezier>>>
 {
     let mut output: Vec<Piecewise<Piecewise<Bezier>>> = Vec::new();
 
@@ -86,10 +91,15 @@ fn prepare_pattern<T: Evaluate<EvalResult = Vector>>(_path: &Piecewise<T>, patte
         PatternCopies::Repeated => {
             // we divide the total arc-length by our pattern's width and then floor it to the nearest integer
             // and this gives us the total amount of whole copies that could fit along this path
-            let copies = (total_arclen/total_width) as i32;
-            let left_over = total_arclen/total_width - copies as f64;
+            let mut copies = (total_arclen/pattern_width) as i32;
+            let mut left_over = total_arclen/pattern_width - copies as f64;
             let mut additional_spacing = 0.;
 
+            while left_over < (settings.spacing / pattern_width) * (copies - 1) as f64 {
+                copies -= 1;
+                left_over = total_arclen/pattern_width - copies as f64;
+            }
+            left_over = left_over - (settings.spacing / pattern_width) * (copies - 1) as f64;
 
             let mut stretch_len = 0.;
 
@@ -132,16 +142,18 @@ fn prepare_pattern<T: Evaluate<EvalResult = Vector>>(_path: &Piecewise<T>, patte
 // The inkscape implemnetation seems to be very similar to the algorithm described above. The aim is that this implementation gives
 // comparable outputs to inkscape's.
 #[allow(non_snake_case)]
-fn pattern_along_path<T: Evaluate<EvalResult = Vector>+Send+Sync>(path: &Piecewise<T>, pattern: &Piecewise<Piecewise<Bezier>>, settings: &PatternSettings) -> Piecewise<Piecewise<Bezier>>
+fn pattern_along_path(path: &Piecewise<Bezier>, pattern: &Piecewise<Piecewise<Bezier>>, settings: &PatternSettings) -> Piecewise<Piecewise<Bezier>>
 {
     // we're gonna parameterize the input path such that 0-1 = 0 -> totalArcLength
     // this is important because samples will be spaced equidistant along the input path
-    let arclenparam = ArcLengthParameterization::from(path);
+    let arclenparam = ArcLengthParameterization::from(path, 1000);
     let total_arclen = arclenparam.get_total_arclen();
 
     let mut output_segments: Vec<Piecewise<Bezier>> = Vec::new();
 
-    let prepared_pattern = prepare_pattern(path, pattern, &arclenparam, settings);
+    let prepared_pattern = prepare_pattern(pattern, &arclenparam, settings);
+    let pattern_bounds = pattern.bounds();
+    let pattern_width = f64::abs(pattern_bounds.left - pattern_bounds.right) * settings.pattern_scale.x;
 
     let transform = |point: &Vector| {
         let u = point.x/total_arclen;
@@ -175,18 +187,144 @@ fn pattern_along_path<T: Evaluate<EvalResult = Vector>+Send+Sync>(path: &Piecewi
         return  P + path_point;
     };
 
+    // This stores our cuts we identify during the culling process. If we have any cuts in this vec we're going
+    // to call this function again with the cuts made.
+    let mut cuts = Vec::new();
+
+    let mut clipping_rects: Vec<Rect> = Vec::new();
     for p in prepared_pattern {
         let transformed_pattern = p.apply_transform(&transform);
 
-        for contour in transformed_pattern.segs {
-            output_segments.push(contour);
+        // After we've transformed the patterns we're now going to get an axis-aligned bounding box, and
+        // compare it to all the previous ones. If we find a % overlap by total bounding box area then we discard
+        // this one and move on to the next. This is relatively naive culling, and could be improved
+        // by turning the path into a fat polyline and clipping it against itself prior to preparing the pattern.
+        // This would allow you to have correct and consistent spacing where the patterns are culled.
+        let mut cull = false;
+
+        if settings.cull_overlap != 1. {
+            // we inflate this rect by the spacing around it
+            let mut this_rect = transformed_pattern.bounds();
+            
+            let bounding_stretch = settings.spacing;
+            this_rect.left = this_rect.left - bounding_stretch;
+            this_rect.right = this_rect.right + bounding_stretch;
+            this_rect.bottom = this_rect.bottom - bounding_stretch;
+            this_rect.top = this_rect.top + bounding_stretch;
+
+            for (i, rect) in clipping_rects.iter().enumerate() {
+                if this_rect.overlaps(rect) {
+                    // we found an overlap now we need to get the percentage of the
+                    // area of the overlap
+                    let area_of_overlap = this_rect.overlap_rect(rect).area();
+                    let total_area = this_rect.area() + rect.area();
+
+                    let fractional_overlap = (area_of_overlap * 2.) / total_area;
+
+                    // if we're checking against the preceding pattern we nudge the overlap towards non-collision
+                    // this is a bit of a hack to help with corner overlaps on diagonal paths
+                    let nudging = if i == clipping_rects.len() - 1 { total_area / bounding_stretch} else {0.};
+                    if fractional_overlap - nudging > settings.cull_overlap {
+                        cull = true;
+
+                        // We get the center of the pattern's location on the input path
+                        let pattern_center = p.bounds().center().x;
+                        let pattern_center_t = arclenparam.parameterize(p.bounds().center().x / total_arclen);
+                        
+                        let overlap_rect = this_rect.overlap_rect(rect);
+                        let greatest_extent = f64::max(overlap_rect.right - overlap_rect.left, overlap_rect.top - overlap_rect.bottom);
+                        let collision_distance = overlap_rect.area().sqrt() - settings.spacing * 2.;
+                        let collision_center = overlap_rect.center();
+
+                        // find the segments the pattern lies between
+                        let start_seg = path.seg_n(
+                            arclenparam.get_arclen_from_t((p.bounds().left) / total_arclen)
+                        );
+                        let end_seg = path.seg_n(
+                            arclenparam.get_arclen_from_t((p.bounds().right) / total_arclen)
+                        );
+
+                        let mut cur_distance = f64::INFINITY;
+                        let mut closest: Option<f64> = None;
+
+                        // loop over those segments
+                        for seg_idx in start_seg..=end_seg {
+                            let ct = solve_curve_for_t(&path.segs[seg_idx], &collision_center, pattern_width+settings.spacing);
+
+                            if let Some(u) = ct {
+
+                                // we need to take u and transform it from the local time of the segment into it's total time along the curve
+                                let u = path.cuts[seg_idx] + (path.cuts[seg_idx + 1] - path.cuts[seg_idx]) * u;
+                                // now we need to parameterize u to compare it with our parameterized time of the current pattern's center
+                                let param_u = arclenparam.parameterize(u);
+                                
+                                let distance = f64::max(u, pattern_center_t) - f64::min(u, pattern_center_t);
+
+                                if distance < cur_distance {
+                                    closest = Some(u);
+                                    cur_distance = distance;
+                                }
+                            }
+                        }
+
+                        let mid_t = closest.unwrap_or(arclenparam.parameterize(p.bounds().center().x / total_arclen));
+                        let start_len = (arclenparam.get_arclen_from_t(mid_t) - collision_distance);
+                        let end_len = arclenparam.get_arclen_from_t(mid_t) + collision_distance;
+
+                        // we push our cuts to the cut vec one at the start and end of the pattern plus the configured spacing
+                        cuts.push(arclenparam.parameterize(start_len / total_arclen));
+                        cuts.push(arclenparam.parameterize(end_len / total_arclen));
+
+                        // if our percentage overlap is greater than the setting we're going to drop this instance of the pattern pattern
+                        continue;
+                    }
+                }
+            }
+
+            if !cull {
+                clipping_rects.push(this_rect);
+            }
         }
+
+        if !cull {
+            for contour in transformed_pattern.segs {
+                output_segments.push(contour);
+            }
+        }
+    }
+
+    // if we have a cut and we have two pass culling enabled we recursively call this function
+    // after splitting the paths at our best guess of the collisions we found in the culling
+    // step 
+    if !cuts.is_empty() && settings.two_pass_culling {
+        let mut new_settings = settings.clone();
+        new_settings.cull_overlap = 1.; // we copy our settings but set overlap to false so we don't do this more than once.
+        new_settings.two_pass_culling = false;
+
+        // Clone our path and make our cuts. We might want to re-parameterize between these cuts to keep their location consistent.
+        let mut new_path = path.clone();
+        for cut in &cuts {
+            let cut_path = new_path.cut_at_t(*cut);
+            new_path = cut_path;
+        }
+
+        let trimmed_path = new_path.remove_short_segs(pattern_width * 2. + settings.spacing, 100);
+        let split_path = trimmed_path.split_at_discontinuities(0.01);
+        let mut output = Vec::new();
+        for sub_path in split_path.segs {
+            let second_path = pattern_along_path(&sub_path, pattern, &new_settings);
+            for contour in second_path.segs {
+                output.push(contour);
+            }
+        }
+
+        return Piecewise::new(output, None);
     }
 
     return Piecewise::new(output_segments, None);
 }
 
-pub fn pattern_along_path_mfek<T: Evaluate<EvalResult = Vector>+Send+Sync>(path: &Piecewise<T>, settings: &PAPContour) -> Piecewise<Piecewise<Bezier>>
+pub fn pattern_along_path_mfek(path: &Piecewise<Bezier>, settings: &PAPContour) -> Piecewise<Piecewise<Bezier>>
 {
     let split_settings = PatternSettings {
         copies: settings.copies.clone(),
@@ -198,7 +336,9 @@ pub fn pattern_along_path_mfek<T: Evaluate<EvalResult = Vector>+Send+Sync>(path:
         normal_offset: settings.normal_offset,
         tangent_offset: settings.tangent_offset,
         pattern_scale: Vector{ x: settings.pattern_scale.0, y: settings.pattern_scale.1},
-        center_pattern: settings.center_pattern
+        center_pattern: settings.center_pattern,
+        cull_overlap: settings.prevent_overdraw,
+        two_pass_culling: settings.two_pass_culling,
     };
 
     pattern_along_path(path, &(&settings.pattern).into(), &split_settings)

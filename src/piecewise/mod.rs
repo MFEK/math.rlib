@@ -14,6 +14,8 @@ use super::evaluate::{Evaluate, Primitive};
 
 // This struct models a simple piecewise function. It maps 0-1 such that 0 is the beginning of the first curve
 // in the collection and 1 is the end of the last.
+#[derive(Clone, Debug)]
+
 pub struct Piecewise<T: Evaluate> {
     // This supports 
     pub cuts: Vec<f64>,
@@ -22,9 +24,9 @@ pub struct Piecewise<T: Evaluate> {
 }
 
 impl<T: Evaluate> Piecewise<T> {
-    pub fn new(segs: Vec<T>, _cuts: Option<Vec<f64>>) -> Self
+    pub fn new(segs: Vec<T>, cuts: Option<Vec<f64>>) -> Self
     {
-        match _cuts {
+        match cuts {
             Some(cuts) => {
                 return Self {
                     cuts: cuts,
@@ -54,7 +56,7 @@ impl<T: Evaluate> Piecewise<T> {
     }
 
     // implementation ripped from lib2geom, performs a binary search to find our segment
-    fn seg_n(&self, t: f64) -> usize
+    pub fn seg_n(&self, t: f64) -> usize
     {
         let mut left = 0;
         let mut right = self.cuts.len() - 1;
@@ -68,19 +70,16 @@ impl<T: Evaluate> Piecewise<T> {
 
             if self.cuts[middle] < t {
                 left = middle
-            }
-            else
-            {
+            } else {
                 right = middle;
             }
         }
 
-        
         // This needs to be replaced with success/failure.
         panic!("Couldn't find the target segment!");
     }
 
-    fn seg_t(&self, t: f64) -> f64 
+    pub fn seg_t(&self, t: f64) -> f64 
     {
         let i = self.seg_n(t);
         return (t - self.cuts[i]) / (self.cuts[i+1] - self.cuts[i]);
@@ -98,7 +97,7 @@ impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+ Sync> Piecewise<Piecewise<
             output.push(contour.subdivide(t));
         }
 
-        return Piecewise::new(output, None);
+        return Piecewise::new(output, Some(self.cuts.clone()));
     }
 }
 
@@ -122,6 +121,51 @@ impl Piecewise<Bezier> {
 
         return Piecewise::new(new_segments, Some(self.cuts.clone()));
     }
+
+    ///Warning: This currently clobbers cuts.
+    pub fn remove_short_segs(&self, len: f64, accuracy: i32) -> Piecewise<Bezier> {
+        let mut new_segs = Vec::new();
+        for bez in &self.segs {
+            let arclen_param = ArcLengthParameterization::from(bez, accuracy);
+            if arclen_param.get_total_arclen() > len {
+               new_segs.push(bez.clone());
+            }
+        }
+
+        return Piecewise::new(new_segs, None);
+    }
+
+    pub fn split_at_discontinuities(&self, distance: f64) -> Piecewise<Piecewise<Bezier>> {
+        let mut output_pws: Vec<Piecewise<Bezier>> = Vec::new();
+        let mut current_run: Vec<Bezier> = Vec::new();
+        let mut last_bez: Option<Bezier> = None;
+        for bez in &self.segs {
+            if let Some(lb) = last_bez {
+                if lb.end_point().distance(bez.start_point()) < distance {
+                    current_run.push(bez.clone());
+                } else {
+                    let output = Piecewise::new(current_run, None);
+                    output_pws.push(output);
+
+                    current_run = Vec::new();
+                    current_run.push(bez.clone());
+                }
+            }
+            else {
+                current_run.push(bez.clone());
+            }
+
+            last_bez = Some(bez.clone());
+        }
+
+        let output = Piecewise::new(current_run, None);
+        if !output.segs.is_empty() {
+            output_pws.push(output);
+        }
+
+        return Piecewise::new(output_pws, None);
+    }
+
 }
 
 impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+Sync> Piecewise<T>
@@ -139,6 +183,7 @@ impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+Sync> Piecewise<T>
     pub fn subdivide(&self, t: f64) -> Piecewise<T>
     {
         let mut new_segments = Vec::new();
+        let mut new_cuts = Vec::new();
         for primitive in &self.segs {
             let subdivisions = primitive.subdivide(t);
 
@@ -153,14 +198,29 @@ impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+Sync> Piecewise<T>
             }
         }
 
-        return Piecewise::new(new_segments, None);
+        let mut last_cut = None;
+        for (i, cut) in self.cuts.iter().enumerate() {
+            if let Some(lcut) = last_cut {
+                if t > lcut && t < *cut {
+                    new_cuts.push(t);
+                    last_cut = Some(t);
+                } else {
+                    last_cut = Some(*cut);
+                }
+            }
+
+            new_cuts.push(*cut);
+        }
+
+        return Piecewise::new(new_segments, Some(new_cuts));
     }
 
     pub fn cut_at_t(&self, t: f64) -> Piecewise<T>
     {
         let mut new_segments = Vec::new();
+        let mut new_cuts = Vec::new();
+
         let seg_num = self.seg_n(t);
-        let primitive = &self.segs[seg_num];
         let seg_time = self.seg_t(t);
 
         let iter = self.segs.iter().enumerate();
@@ -174,15 +234,31 @@ impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+Sync> Piecewise<T>
                         new_segments.push(subs.1);
                     }
                     _ => {
-                        new_segments.push(primitive.clone());
+                        new_segments.push(self.segs[i].clone());
                     }
                 }        
             } else {
-                new_segments.push(primitive.clone());
+                new_segments.push(self.segs[i].clone());
             }
         }
 
-        return Piecewise::new(new_segments, None);
+        let mut last_cut = None;
+        for (i, cut) in self.cuts.iter().enumerate() {
+            if let Some(lcut) = last_cut {
+                if t > lcut && t < *cut {
+                    new_cuts.push(t);
+                    last_cut = Some(t);
+                } else {
+                    last_cut = Some(*cut);
+                }
+            } else {
+                last_cut = Some(*cut);
+            }
+
+            new_cuts.push(*cut);
+        }
+
+        return Piecewise::new(new_segments, Some(new_cuts));
     }
 }
 

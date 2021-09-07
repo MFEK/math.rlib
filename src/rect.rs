@@ -54,6 +54,30 @@ impl Rect {
         };
     }
 
+    pub fn area(&self) -> f64 {
+        (self.left - self.right).abs() *  (self.bottom - self.top).abs()
+    }
+
+    pub fn overlaps(&self, other: &Rect) -> bool {
+        if  self.bottom < other.top &&
+            self.top > other.bottom &&
+            self.left < other.right &&
+            self.right > other.left {
+               return true;
+        }
+        false
+    }
+
+    // returns the resulting AABB from two other Rect's overlap
+    pub fn overlap_rect(&self, other: &Rect) -> Rect {
+        Rect {
+            left: self.left.max(other.left),
+            bottom: self.bottom.max(other.bottom),
+            right: self.right.min(other.right),
+            top: self.top.min(other.top),
+        }
+    }
+
     pub fn encapsulate_rect(&self, other: Rect) -> Rect
     {
         let left_bottom = Vector{x: other.left, y: other.bottom};
@@ -67,5 +91,12 @@ impl Rect {
 
     pub fn height(&self) -> f64 {
         f64::abs(self.top - self.bottom)
+    }
+
+    pub fn center(&self) -> Vector {
+        let left_bottom = Vector::from_components(self.left, self.bottom);
+        let right_top = Vector::from_components(self.right, self.top);
+
+        return left_bottom.lerp(right_top, 0.5);
     }
 }
