@@ -188,12 +188,16 @@ fn pattern_along_path(path: &Piecewise<Bezier>, pattern: &Piecewise<Piecewise<Be
     };
 
     // This stores our cuts we identify during the culling process. If we have any cuts in this vec we're going
-    // to call this function again with the cuts made.
+    // to call this function again with the cuts made if the two_pass setting is true.
     let mut cuts = Vec::new();
 
     let mut clipping_rects: Vec<Rect> = Vec::new();
     for p in prepared_pattern {
         let transformed_pattern = p.apply_transform(&transform);
+
+        // TODO: Make this use convex hulls for more accuracy. Should be plenty fast enough, and handle a lot of our edge
+        // cases a lot better. Use seperating axis theorem for collision detection. I'll need to implement quickhull, or
+        // find an existing implementation.
 
         // After we've transformed the patterns we're now going to get an axis-aligned bounding box, and
         // compare it to all the previous ones. If we find a % overlap by total bounding box area then we discard
@@ -268,7 +272,7 @@ fn pattern_along_path(path: &Piecewise<Bezier>, pattern: &Piecewise<Piecewise<Be
                         }
 
                         let mid_t = closest.unwrap_or(arclenparam.parameterize(p.bounds().center().x / total_arclen));
-                        let start_len = (arclenparam.get_arclen_from_t(mid_t) - collision_distance);
+                        let start_len = arclenparam.get_arclen_from_t(mid_t) - collision_distance ;
                         let end_len = arclenparam.get_arclen_from_t(mid_t) + collision_distance;
 
                         // we push our cuts to the cut vec one at the start and end of the pattern plus the configured spacing
@@ -326,6 +330,7 @@ fn pattern_along_path(path: &Piecewise<Bezier>, pattern: &Piecewise<Piecewise<Be
 
 pub fn pattern_along_path_mfek(path: &Piecewise<Bezier>, settings: &PAPContour) -> Piecewise<Piecewise<Bezier>>
 {
+    // we're only doing this to avoid a circular dependency
     let split_settings = PatternSettings {
         copies: settings.copies.clone(),
         subdivide: settings.subdivide.clone(),
@@ -344,7 +349,7 @@ pub fn pattern_along_path_mfek(path: &Piecewise<Bezier>, settings: &PAPContour) 
     pattern_along_path(path, &(&settings.pattern).into(), &split_settings)
 }
 
-pub fn pattern_along_glif<U: glifparser::PointData>(path: &Glif<U>, pattern: &Glif<U>, settings: &PatternSettings) -> Glif<MFEKPointData>
+pub fn pattern_along_glif<U: glifparser::PointData>(path: &Glif<U>, pattern: &Glif<U>, settings: &PatternSettings, marked_contour: Option<usize>) -> Glif<MFEKPointData>
 {
     // convert our path and pattern to piecewise collections of beziers
     let piece_path = Piecewise::from(path.outline.as_ref().unwrap());
@@ -353,19 +358,28 @@ pub fn pattern_along_glif<U: glifparser::PointData>(path: &Glif<U>, pattern: &Gl
     let mut output_outline: Outline<MFEKPointData> = Vec::new();
 
 
-    for contour in piece_path.segs {
-        let mut temp_pattern = pattern_along_path(&contour, &piece_pattern, settings);
-
-        if settings.simplify {
-            let skpattern: Path = temp_pattern.to_skpath();
-            temp_pattern = Piecewise::from(&skpattern.simplify().unwrap().as_winding().unwrap());
+    for (idx, contour) in piece_path.segs.iter().enumerate() {
+        // if we're only stroking a specific contour and this is not it we copy the existing pattern and return
+        if let Some(specific_contour) = marked_contour {
+            println!("{0} {1}", idx, specific_contour);
+            if idx != specific_contour {
+                output_outline.push(contour.to_contour());
+                continue;
+            }
         }
 
-        let temp_outline = temp_pattern.to_outline();
+        let mut result_pw = pattern_along_path(&contour, &piece_pattern, settings);
 
-        for contour in temp_outline
+        if settings.simplify {
+            let skpattern: Path = result_pw.to_skpath();
+            result_pw = Piecewise::from(&skpattern.simplify().unwrap().as_winding().unwrap());
+        }
+
+        let result_outline = result_pw.to_outline();
+
+        for result_contour in result_outline
         {
-            output_outline.push(contour);
+            output_outline.push(result_contour);
         }
     }
 
