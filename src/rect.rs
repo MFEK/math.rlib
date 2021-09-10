@@ -1,6 +1,7 @@
 use super::vector::Vector;
 
 // An axis-aligned rectangle. Sort of a stub right now to make some function outputs more legible.
+#[derive(Clone, Copy, Debug)]
 pub struct Rect {
     pub top: f64,
     pub bottom: f64,
@@ -55,7 +56,7 @@ impl Rect {
     }
 
     pub fn area(&self) -> f64 {
-        (self.left - self.right).abs() *  (self.bottom - self.top).abs()
+        (self.right - self.left) *  (self.top - self.bottom)
     }
 
     pub fn overlaps(&self, other: &Rect) -> bool {

@@ -20,6 +20,8 @@ pub struct PatternSettings {
     pub center_pattern: bool,
     pub cull_overlap: f64,
     pub two_pass_culling: bool,
+    pub reverse_culling: bool,
+    pub reverse_path: bool,
 }
 
 // This takes our pattern settings and translate/splits/etc our input pattern in preparation of the main algorithm. We prepare our input in 'curve space'. In this space 0 on the y-axis will fall onto a point on the path. A value greater or less than 0 represents offset
@@ -151,12 +153,13 @@ fn pattern_along_path(path: &Piecewise<Bezier>, pattern: &Piecewise<Piecewise<Be
 
     let mut output_segments: Vec<Piecewise<Bezier>> = Vec::new();
 
-    let prepared_pattern = prepare_pattern(pattern, &arclenparam, settings);
+    let mut prepared_pattern = prepare_pattern(pattern, &arclenparam, settings);
     let pattern_bounds = pattern.bounds();
     let pattern_width = f64::abs(pattern_bounds.left - pattern_bounds.right) * settings.pattern_scale.x;
 
     let transform = |point: &Vector| {
-        let u = point.x/total_arclen;
+        // if we're reversing the path we subtract u from 1 and get our reversed time
+        let u = if settings.reverse_path { 1. - point.x/total_arclen } else { point.x/total_arclen };
     
         // Paramaterize u such that 0-1 maps to the curve by arclength
         let t = arclenparam.parameterize(u);
@@ -192,108 +195,74 @@ fn pattern_along_path(path: &Piecewise<Bezier>, pattern: &Piecewise<Piecewise<Be
     let mut cuts = Vec::new();
 
     let mut clipping_rects: Vec<Rect> = Vec::new();
+
+    if settings.reverse_culling { prepared_pattern.reverse() };
+
     for p in prepared_pattern {
         let transformed_pattern = p.apply_transform(&transform);
 
-        // TODO: Make this use convex hulls for more accuracy. Should be plenty fast enough, and handle a lot of our edge
+        // TODO: Make this use convex hulls for more accuracy. Should be plenty fast enough, and handle our edge
         // cases a lot better. Use seperating axis theorem for collision detection. I'll need to implement quickhull, or
-        // find an existing implementation.
+        // find an existing implementation. Current implementation has issues with stuff like long dashed lines on a diagonal
+        // due to AABB
 
         // After we've transformed the patterns we're now going to get an axis-aligned bounding box, and
         // compare it to all the previous ones. If we find a % overlap by total bounding box area then we discard
         // this one and move on to the next. This is relatively naive culling, and could be improved
         // by turning the path into a fat polyline and clipping it against itself prior to preparing the pattern.
         // This would allow you to have correct and consistent spacing where the patterns are culled.
-        let mut cull = false;
-
         if settings.cull_overlap != 1. {
             // we inflate this rect by the spacing around it
             let mut this_rect = transformed_pattern.bounds();
-            
-            let bounding_stretch = settings.spacing;
-            this_rect.left = this_rect.left - bounding_stretch;
-            this_rect.right = this_rect.right + bounding_stretch;
-            this_rect.bottom = this_rect.bottom - bounding_stretch;
-            this_rect.top = this_rect.top + bounding_stretch;
 
+            let mut greatest_overlap = 0.;
+            let mut overlap_index = 0;
+            let mut overlapping_rect: Option<Rect> = None;
             for (i, rect) in clipping_rects.iter().enumerate() {
                 if this_rect.overlaps(rect) {
-                    // we found an overlap now we need to get the percentage of the
-                    // area of the overlap
-                    let area_of_overlap = this_rect.overlap_rect(rect).area();
-                    let total_area = this_rect.area() + rect.area();
-
-                    let fractional_overlap = (area_of_overlap * 2.) / total_area;
-
-                    // if we're checking against the preceding pattern we nudge the overlap towards non-collision
-                    // this is a bit of a hack to help with corner overlaps on diagonal paths
-                    let nudging = if i == clipping_rects.len() - 1 { total_area / bounding_stretch} else {0.};
-                    if fractional_overlap - nudging > settings.cull_overlap {
-                        cull = true;
-
-                        // We get the center of the pattern's location on the input path
-                        let pattern_center = p.bounds().center().x;
-                        let pattern_center_t = arclenparam.parameterize(p.bounds().center().x / total_arclen);
-                        
-                        let overlap_rect = this_rect.overlap_rect(rect);
-                        let greatest_extent = f64::max(overlap_rect.right - overlap_rect.left, overlap_rect.top - overlap_rect.bottom);
-                        let collision_distance = overlap_rect.area().sqrt() - settings.spacing * 2.;
-                        let collision_center = overlap_rect.center();
-
-                        // find the segments the pattern lies between
-                        let start_seg = path.seg_n(
-                            arclenparam.get_arclen_from_t((p.bounds().left) / total_arclen)
-                        );
-                        let end_seg = path.seg_n(
-                            arclenparam.get_arclen_from_t((p.bounds().right) / total_arclen)
-                        );
-
-                        let mut cur_distance = f64::INFINITY;
-                        let mut closest: Option<f64> = None;
-
-                        // loop over those segments
-                        for seg_idx in start_seg..=end_seg {
-                            let ct = solve_curve_for_t(&path.segs[seg_idx], &collision_center, pattern_width+settings.spacing);
-
-                            if let Some(u) = ct {
-
-                                // we need to take u and transform it from the local time of the segment into it's total time along the curve
-                                let u = path.cuts[seg_idx] + (path.cuts[seg_idx + 1] - path.cuts[seg_idx]) * u;
-                                // now we need to parameterize u to compare it with our parameterized time of the current pattern's center
-                                let param_u = arclenparam.parameterize(u);
-                                
-                                let distance = f64::max(u, pattern_center_t) - f64::min(u, pattern_center_t);
-
-                                if distance < cur_distance {
-                                    closest = Some(u);
-                                    cur_distance = distance;
-                                }
-                            }
-                        }
-
-                        let mid_t = closest.unwrap_or(arclenparam.parameterize(p.bounds().center().x / total_arclen));
-                        let start_len = arclenparam.get_arclen_from_t(mid_t) - collision_distance ;
-                        let end_len = arclenparam.get_arclen_from_t(mid_t) + collision_distance;
-
-                        // we push our cuts to the cut vec one at the start and end of the pattern plus the configured spacing
-                        cuts.push(arclenparam.parameterize(start_len / total_arclen));
-                        cuts.push(arclenparam.parameterize(end_len / total_arclen));
-
-                        // if our percentage overlap is greater than the setting we're going to drop this instance of the pattern pattern
-                        continue;
+                    if this_rect.overlap_rect(rect).area() > greatest_overlap {
+                        greatest_overlap = this_rect.overlap_rect(&rect).area();
+                        overlapping_rect = Some(rect.clone());
+                        overlap_index = i;
                     }
                 }
             }
 
-            if !cull {
-                clipping_rects.push(this_rect);
+            if let Some(rect) = overlapping_rect {
+                // we found an overlap now we need to get the percentage of the
+                // area of the overlap
+                let area_of_overlap = this_rect.overlap_rect(&rect).area();
+                let total_area = this_rect.area() + rect.area();
+
+                let fractional_overlap = (area_of_overlap * 2.) / total_area;
+
+                // if we're checking against the preceding pattern we nudge the overlap towards non-collision
+                // we are inflating the pattern's AABBs by the spacing in each direction, so if it's overlapping
+                // less than that or equal to that we don't want to discard
+                let nudging = if overlap_index == clipping_rects.len() - 1 { settings.spacing / total_area.sqrt() } else { 0. };
+                println!("nudging {} {}", nudging, fractional_overlap);
+                if fractional_overlap - nudging > settings.cull_overlap {
+                    let start_len = p.bounds().left;
+                    let end_len = p.bounds().right;
+
+                    // we push our cuts to the cut vec one at the start and end of the pattern plus the configured spacing
+                    cuts.push(arclenparam.parameterize(start_len / total_arclen));
+                    cuts.push(arclenparam.parameterize(end_len / total_arclen));
+
+                    // if our percentage overlap is greater than the setting we're going to drop this instance of the pattern pattern
+                    continue;
+                }
             }
+
+            this_rect.left = this_rect.left - settings.spacing;
+            this_rect.right = this_rect.right + settings.spacing;
+            this_rect.bottom = this_rect.bottom - settings.spacing;
+            this_rect.top = this_rect.top + settings.spacing;
+            clipping_rects.push(this_rect);
         }
 
-        if !cull {
-            for contour in transformed_pattern.segs {
-                output_segments.push(contour);
-            }
+        for contour in transformed_pattern.segs {
+            output_segments.push(contour);
         }
     }
 
@@ -344,6 +313,8 @@ pub fn pattern_along_path_mfek(path: &Piecewise<Bezier>, settings: &PAPContour) 
         center_pattern: settings.center_pattern,
         cull_overlap: settings.prevent_overdraw,
         two_pass_culling: settings.two_pass_culling,
+        reverse_path: settings.reverse_path,
+        reverse_culling: settings.reverse_culling,
     };
 
     pattern_along_path(path, &(&settings.pattern).into(), &split_settings)
