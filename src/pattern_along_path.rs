@@ -240,7 +240,6 @@ fn pattern_along_path(path: &Piecewise<Bezier>, pattern: &Piecewise<Piecewise<Be
                 // we are inflating the pattern's AABBs by the spacing in each direction, so if it's overlapping
                 // less than that or equal to that we don't want to discard
                 let nudging = if overlap_index == clipping_rects.len() - 1 { settings.spacing / total_area.sqrt() } else { 0. };
-                println!("nudging {} {}", nudging, fractional_overlap);
                 if fractional_overlap - nudging > settings.cull_overlap {
                     let start_len = p.bounds().left;
                     let end_len = p.bounds().right;
@@ -332,7 +331,6 @@ pub fn pattern_along_glif<U: glifparser::PointData>(path: &Glif<U>, pattern: &Gl
     for (idx, contour) in piece_path.segs.iter().enumerate() {
         // if we're only stroking a specific contour and this is not it we copy the existing pattern and return
         if let Some(specific_contour) = marked_contour {
-            println!("{0} {1}", idx, specific_contour);
             if idx != specific_contour {
                 output_outline.push(contour.to_contour());
                 continue;
