@@ -173,6 +173,7 @@ impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+Sync> Piecewise<T>
 
     pub fn is_closed(&self) -> bool
     {
+        println!("{:?} {:?}", self.start_point(), self.end_point());
         if self.start_point().is_near(self.end_point(),SMALL_DISTANCE)
         {
             return true;
@@ -199,7 +200,7 @@ impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+Sync> Piecewise<T>
         }
 
         let mut last_cut = None;
-        for (i, cut) in self.cuts.iter().enumerate() {
+        for cut in &self.cuts {
             if let Some(lcut) = last_cut {
                 if t > lcut && t < *cut {
                     new_cuts.push(t);
@@ -243,7 +244,7 @@ impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+Sync> Piecewise<T>
         }
 
         let mut last_cut = None;
-        for (i, cut) in self.cuts.iter().enumerate() {
+        for cut in &self.cuts {
             if let Some(lcut) = last_cut {
                 if t > lcut && t < *cut {
                     new_cuts.push(t);
