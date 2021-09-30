@@ -173,7 +173,6 @@ impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+Sync> Piecewise<T>
 
     pub fn is_closed(&self) -> bool
     {
-        println!("{:?} {:?}", self.start_point(), self.end_point());
         if self.start_point().is_near(self.end_point(),SMALL_DISTANCE)
         {
             return true;
