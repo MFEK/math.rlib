@@ -4,7 +4,7 @@ use super::{Bezier, Evaluate, Piecewise, Vector, EvalScale, EvalTranslate, EvalR
 use glifparser::{Glif};
 
 use flo_curves::line::{line_intersects_line};
-use crate::{consts::SMALL_DISTANCE, vec2};
+use crate::{consts::SMALL_DISTANCE, evaluate::Primitive, vec2};
 
 
 #[allow(unused)]
@@ -134,7 +134,13 @@ impl GlyphBuilder {
             to + -tangent2 * dist_along_tangents,
             to
         );
-        self.bezier_to(arc);
+        
+        if let Some((left, right)) = arc.subdivide(0.5) {
+            self.bezier_to(left);
+            self.bezier_to(right);
+        } else {
+            self.bezier_to(arc);
+        }
     }
 
     pub fn circle_arc_to(&mut self, to: Vector, tangent1: Vector, tangent2: Vector)
