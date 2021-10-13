@@ -12,6 +12,7 @@ pub struct VWSSettings {
 // where one or more handles is colocated
 fn preprocess_path(in_pw: &Piecewise<Bezier>) -> Piecewise<Bezier>
 {
+    let in_pw = in_pw.remove_short_segs(1., 3);
     let mut out_contours = Vec::new();
 
     for bez in &in_pw.segs {
