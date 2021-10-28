@@ -1,6 +1,3 @@
-
-use glifparser::*;
-
 pub mod glif;
 #[cfg(feature="default")]
 mod skia;

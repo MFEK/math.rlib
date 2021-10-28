@@ -1,5 +1,5 @@
-use super::{Bezier, Outline, Piecewise, Vector};
-use glifparser::{Contour, Handle, PointType};
+use super::{Bezier, Piecewise, Vector};
+use glifparser::{Contour, Outline, Handle, PointType};
 #[cfg(feature="default")]
 use glifparser::glif::{MFEKContour, MFEKOutline};
 
