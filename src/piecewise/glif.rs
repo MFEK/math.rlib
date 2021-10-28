@@ -1,6 +1,7 @@
 use super::{Bezier, Outline, Piecewise, Vector};
-use glifparser::{Contour, Handle, PointType, glif::{MFEKContour, MFEKOutline}};
-
+use glifparser::{Contour, Handle, PointType};
+#[cfg(feature="default")]
+use glifparser::glif::{MFEKContour, MFEKOutline};
 
 impl<T: glifparser::PointData> From<&Outline<T>> for Piecewise<Piecewise<Bezier>>
 {
@@ -16,6 +17,7 @@ impl<T: glifparser::PointData> From<&Outline<T>> for Piecewise<Piecewise<Bezier>
     }
 }
 
+#[cfg(feature="default")]
 impl<T: glifparser::PointData> From<&MFEKOutline<T>> for Piecewise<Piecewise<Bezier>>
 {
     fn from(outline: &MFEKOutline<T>) -> Self { 
@@ -30,6 +32,7 @@ impl<T: glifparser::PointData> From<&MFEKOutline<T>> for Piecewise<Piecewise<Bez
     }
 }
 
+#[cfg(feature="default")]
 impl<T: glifparser::PointData> From<MFEKOutline<T>> for Piecewise<Piecewise<Bezier>>
 {
     fn from(outline: MFEKOutline<T>) -> Self { 
@@ -79,6 +82,7 @@ impl<T: glifparser::PointData> From<&Contour<T>> for Piecewise<Bezier>
     }
 }
 
+#[cfg(feature="default")]
 impl<T: glifparser::PointData> From<&MFEKContour<T>> for Piecewise<Bezier>
 {
     fn from(contour: &MFEKContour<T>) -> Self {
@@ -86,6 +90,7 @@ impl<T: glifparser::PointData> From<&MFEKContour<T>> for Piecewise<Bezier>
     }
 }
 
+#[cfg(feature="default")]
 impl<T: glifparser::PointData> From<MFEKContour<T>> for Piecewise<Bezier>
 {
     fn from(contour: MFEKContour<T>) -> Self {

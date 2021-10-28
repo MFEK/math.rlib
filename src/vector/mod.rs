@@ -1,3 +1,4 @@
+#[cfg(feature="default")]
 mod skia;
 mod glif;
 mod flo;

@@ -12,10 +12,12 @@ pub mod coordinate;
 pub mod interpolator;
 pub mod glif;
 pub mod glyphbuilder;
+#[cfg(feature="default")]
 pub mod variable_width_stroking;
+#[cfg(feature="default")]
 pub mod pattern_along_path;
-
-extern crate skia_safe;
+#[cfg(feature="default")]
+pub use {skia_safe, self::{variable_width_stroking::*, pattern_along_path::*}};
 
 pub use self::vector::Vector;
 pub use self::piecewise::Piecewise;
@@ -23,9 +25,6 @@ pub use self::rect::Rect;
 pub use self::bezier::Bezier;
 pub use self::arclenparameterization::ArcLengthParameterization;
 pub use self::glyphbuilder::GlyphBuilder;
-
-pub use self::variable_width_stroking::*;
-pub use self::pattern_along_path::*;
 
 pub use self::evaluate::Evaluate;
 pub use self::evaluate::{EvalScale, EvalRotate, EvalTranslate};
