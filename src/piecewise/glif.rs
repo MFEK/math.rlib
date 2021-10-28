@@ -1,5 +1,5 @@
 use super::{Bezier, Outline, Piecewise, Vector};
-use glifparser::{Contour, Handle, PointType, glif::{MFEKContour, MFEKOutline, MFEKPointData}};
+use glifparser::{Contour, Handle, PointType, glif::{MFEKContour, MFEKOutline}};
 
 
 impl<T: glifparser::PointData> From<&Outline<T>> for Piecewise<Piecewise<Bezier>>
@@ -38,8 +38,8 @@ impl<T: glifparser::PointData> From<MFEKOutline<T>> for Piecewise<Piecewise<Bezi
 }
 
 impl Piecewise<Piecewise<Bezier>> {
-    pub fn to_outline(&self) -> Outline<MFEKPointData> {
-        let mut output_outline: Outline<MFEKPointData> = Outline::new();
+    pub fn to_outline<T: glifparser::PointData>(&self) -> Outline<T> {
+        let mut output_outline: Outline<T> = Outline::new();
 
         for contour in &self.segs
         {
@@ -94,8 +94,8 @@ impl<T: glifparser::PointData> From<MFEKContour<T>> for Piecewise<Bezier>
 }
 
 impl Piecewise<Bezier> {
-    pub fn to_contour(&self) -> Contour<MFEKPointData> {
-        let mut output_contour: Contour<MFEKPointData> = Vec::new();
+    pub fn to_contour<T: glifparser::PointData>(&self) -> Contour<T> {
+        let mut output_contour: Contour<T> = Vec::new();
         let mut last_curve: Option<[Vector; 4]> = None;
 
         let mut first_point = true;

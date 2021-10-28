@@ -1,8 +1,7 @@
 use super::{ArcLengthParameterization, Bezier, Evaluate, EvalScale, EvalTranslate, Parameterization, Piecewise, Vector, Rect};
 use crate::vec2;
 
-use flo_curves::bezier::solve_curve_for_t;
-use glifparser::{Glif, Outline, glif::{MFEKPointData, PAPContour, PatternCopies, PatternSubdivide, PatternStretch}};
+use glifparser::{Glif, Outline, glif::{PAPContour, PatternCopies, PatternSubdivide, PatternStretch}};
 use skia_safe::{Path};
 
 // At some point soon I want to restructure this algorithm. The current two pass 
@@ -319,14 +318,16 @@ pub fn pattern_along_path_mfek(path: &Piecewise<Bezier>, settings: &PAPContour) 
     pattern_along_path(path, &(&settings.pattern).into(), &split_settings)
 }
 
-pub fn pattern_along_glif<U: glifparser::PointData>(path: &Glif<U>, pattern: &Glif<U>, settings: &PatternSettings, marked_contour: Option<usize>) -> Glif<MFEKPointData>
+pub fn pattern_along_glif<U: glifparser::PointData>(path: &Glif<U>, pattern: &Glif<U>, settings: &PatternSettings, marked_contour: Option<usize>) -> Glif<U>
 {
     // convert our path and pattern to piecewise collections of beziers
-    let piece_path = Piecewise::from(path.outline.as_ref().unwrap());
+    let piece_path = match path.outline {
+        Some(ref o) => Piecewise::from(o),
+        None => {return path.clone()}
+    };
     let piece_pattern = Piecewise::from(pattern.outline.as_ref().unwrap());
 
-    let mut output_outline: Outline<MFEKPointData> = Vec::new();
-
+    let mut output_outline: Outline<U> = Vec::new();
 
     for (idx, contour) in piece_path.segs.iter().enumerate() {
         // if we're only stroking a specific contour and this is not it we copy the existing pattern and return
