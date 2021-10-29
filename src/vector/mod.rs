@@ -28,6 +28,10 @@ impl Vector {
         return (self.x as f32, self.y as f32);
     }
 
+    pub fn to_f64_tuple(self) -> (f64, f64) {
+        return (self.x, self.y);
+    }
+
     pub fn is_near(self, v1: Vector, eps: f64) -> bool
     {
         self.x - v1.x <= eps && self.x - v1.x >= -eps &&
