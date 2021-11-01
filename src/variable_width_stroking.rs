@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use super::{Bezier, Evaluate, Piecewise, Vector, GlyphBuilder};
 use super::consts::{SMALL_DISTANCE};
 use glifparser::{Glif, JoinType, Outline, VWSContour, glif::{CapType, InterpolationType, MFEKPointData, VWSHandle}};
@@ -279,7 +281,6 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
         let inner = Piecewise::new(out_builder.beziers, None);
         return Piecewise::new(vec![inner], None);
     } 
-
 }
 
 pub fn variable_width_stroke_glif<U: glifparser::PointData>(path: &Glif<U>, settings: VWSSettings) -> Glif<MFEKPointData>
@@ -298,7 +299,7 @@ pub fn variable_width_stroke_glif<U: glifparser::PointData>(path: &Glif<U>, sett
 
     let iter = piece_path.segs.iter().enumerate();
     for (i, pwpath_contour) in iter {
-        let vws_contour = find_vws_contour(i, &handles.0);
+        let vws_contour = &handles.get(i);
         
         if let Some(contour) = vws_contour {
             let results = variable_width_stroke(&pwpath_contour, &contour, &settings);
@@ -320,7 +321,7 @@ pub fn variable_width_stroke_glif<U: glifparser::PointData>(path: &Glif<U>, sett
         unicode: path.unicode.clone(),
         name: path.name.clone(),
         format: 2,
-        lib: Some(handles.1),
+        lib: None,
         components: path.components.clone(),
         guidelines: path.guidelines.clone(),
         images: path.images.clone(),
@@ -336,52 +337,57 @@ pub fn find_vws_contour(id: usize, vws_outline: &Vec<VWSContour>) -> Option<&VWS
     return vws_outline.get(id);
 }
 
-pub fn parse_vws_lib<T: glifparser::PointData>(input: &Glif<T>) -> Option<(Vec<VWSContour>, xmltree::Element)>
+pub fn parse_vws_lib<T: glifparser::PointData>(input: &Glif<T>) -> Option<Vec<VWSContour>>
 {
-    if let Some(lib) = input.lib.as_ref() {
-        let mut lib = lib.clone();
+    if !input.lib.is_some() { return None }
+    if let Some(lib) = input.lib.as_ref().unwrap().get("io.MFEK.variable_width_stroke") {
+        let mut vd: VecDeque<_> = lib.as_array().unwrap().clone().into();
         let mut vws_outline = Vec::new();
 
-        while let Some(mut vws) = lib.take_child("vws") {
+        while let Some(vws) = vd.pop_front() {
+            let vws = vws.as_dictionary().unwrap();
+
             let _name = vws
-                .attributes
                 .get("id")
-                .expect("VWSContour must have an id");
+                .expect("VWSContour->id wrong type")
+                .as_string()
+                .expect("VWSContour must have a id");
 
             let cap_start = vws
-                .attributes
-                .get("cap_start");
+                .get("cap_start")
+                .expect("VWSContour->cap_start wrong type")
+                .as_string()
+                .expect("VWSContour must have a cap_start");
             
             let cap_end = vws
-                .attributes
-                .get("cap_end");
+                .get("cap_end")
+                .expect("VWSContour->cap_end wrong type")
+                .as_string()
+                .expect("VWSContour must have a cap_end");
             
             let join = vws
-                .attributes
-                .get("join");
+                .get("join")
+                .expect("VWSContour->join wrong type")
+                .as_string()
+                .expect("VWSContour must have a join");
 
-            let round_str ="round".to_string();
-            let cap_start = cap_start.unwrap_or(&round_str);
-            let cap_end = cap_end.unwrap_or(&round_str);
-            let join = join.unwrap_or(&round_str);
-
-            let cap_start_type = match cap_start.as_str() {
+            let cap_start_type = match cap_start {
                 "round" => CapType::Round,
                 "circle" => CapType::Circle,
                 "square" => CapType::Square,
                 "custom" => CapType::Custom,
-                _ => panic!("Invalid cap type!")
+                _ => panic!("Invalid start cap type!")
             };
             
-            let cap_end_type = match cap_end.as_str() {
+            let cap_end_type = match cap_end {
                 "round" => CapType::Round,
                 "circle" => CapType::Circle,
                 "square" => CapType::Square,
                 "custom" => CapType::Custom,
-                _ => panic!("Invalid cap type!")
+                _ => panic!("Invalid end cap type!")
             };
 
-            let join_type = match join.as_str() {
+            let join_type = match join {
                 "round" => JoinType::Round,
                 "circle" => JoinType::Circle,
                 "miter" => JoinType::Miter,
@@ -398,40 +404,46 @@ pub fn parse_vws_lib<T: glifparser::PointData>(input: &Glif<T>) -> Option<(Vec<V
                 remove_external: false,
             };
 
-            while let Some(vws_handle) = vws.take_child("handle") {
+            let mut handles: VecDeque<_> = vws.get("handles")
+                .expect("No handles in VWSContour?")
+                .as_array()
+                .expect("VWSContour->handles wrong type")
+                .clone()
+                .into();
+
+            while let Some(vws_handle) = handles.pop_front() {
+                let vws_handle = vws_handle.as_dictionary().expect("VWSHandle wrong type");
+
                 let left: f64 = vws_handle
-                    .attributes
                     .get("left")
-                    .expect("VWSHandle missing left")
-                    .parse()
-                    .expect("VWSHandle not float.");
+                    .expect("VWSHandle->left wrong type")
+                    .as_real()
+                    .expect("VWSHandle must have a left");
 
                 let right: f64 = vws_handle
-                    .attributes
                     .get("right")
-                    .expect("VWSHandle missing right")
-                    .parse()
-                    .expect("VWSHandle not float.");
+                    .expect("VWSHandle->right wrong type")
+                    .as_real()
+                    .expect("VWSHandle must have a right");
 
                 let tangent: f64 = vws_handle
-                    .attributes
                     .get("tangent")
-                    .expect("VWSHandle missing tangent")
-                    .parse()
-                    .expect("VWSHandle tangent not float.");
+                    .expect("VWSHandle->tangent wrong type")
+                    .as_real()
+                    .expect("VWSHandle must have a tangent");
 
-                let interpolation_string: &String = vws_handle
-                    .attributes
+                let interpolation_string: &str = vws_handle
                     .get("interpolation")
-                    .expect("VWSHandle missing interpolation type");
-                    
+                    .expect("VWSHandle->interpolation wrong type")
+                    .as_string()
+                    .expect("VWSHandle must have a interpolation");
 
-                let interpolation = match interpolation_string.as_str() {
+                let interpolation = match interpolation_string {
                     "linear" => InterpolationType::Linear,
                     _ => InterpolationType::Null
                 };
 
-                vws_handles.handles.push(VWSHandle{
+                vws_handles.handles.push(VWSHandle {
                     left_offset: left,
                     right_offset: right,
                     tangent_offset: tangent,
@@ -443,61 +455,46 @@ pub fn parse_vws_lib<T: glifparser::PointData>(input: &Glif<T>) -> Option<(Vec<V
         }
 
         if vws_outline.len() > 0 {
-            return Some((vws_outline, lib));
+            return Some(vws_outline);
         }
     }
 
     return None;
 }
 
-pub fn cap_type_to_string(ct: CapType)  -> String
+pub fn generate_vws_lib(vwscontours: &Vec<VWSContour>) -> Option<plist::Dictionary>
 {
-    match ct {
-        CapType::Round => "round".to_string(),
-        CapType::Circle => "circle".to_string(),
-        CapType::Square => "square".to_string(),
-        CapType::Custom => "custom".to_string(),
+    if vwscontours.len() == 0 {
+        return None
     }
-}
 
-pub fn join_type_to_string(jt: JoinType)  -> String
-{
-    match jt {
-        JoinType::Round => "round".to_string(),
-        JoinType::Circle => "circle".to_string(),
-        JoinType::Miter => "miter".to_string(),
-        JoinType::Bevel => "bevel".to_string(),
-    }
-}
-
-pub fn generate_vws_lib(vwscontours:  &Vec<VWSContour>) -> Option<xmltree::Element>
-{
-    if vwscontours.len() == 0 { return None }
-    let mut lib_node = xmltree::Element::new("lib");
+    let mut lib_node = plist::Dictionary::new();
+    let mut vws_vec = vec![];
 
     for vwcontour in vwscontours {
-        let mut vws_node = xmltree::Element::new("vws");
-         vws_node.attributes.insert("cap_start".to_owned(), cap_type_to_string(vwcontour.cap_start_type));
-         vws_node.attributes.insert("cap_end".to_owned(), cap_type_to_string(vwcontour.cap_end_type));
-         vws_node.attributes.insert("join".to_owned(), join_type_to_string(vwcontour.join_type));
+        let mut vws_contour_node = plist::Dictionary::new();
+
+        vws_contour_node.insert("cap_start".to_owned(), plist::Value::String(vwcontour.cap_start_type.to_string()));
+        vws_contour_node.insert("cap_end".to_owned(), plist::Value::String(vwcontour.cap_end_type.to_string()));
+        vws_contour_node.insert("join".to_owned(), plist::Value::String(vwcontour.join_type.to_string()));
+
+        let mut handles = vec![];
 
         for handle in &vwcontour.handles {
-            let mut handle_node = xmltree::Element::new("handle");
-            handle_node.attributes.insert("left".to_owned(), handle.left_offset.to_string());
-            handle_node.attributes.insert("right".to_owned(), handle.right_offset.to_string());
-            handle_node.attributes.insert("tangent".to_owned(), handle.tangent_offset.to_string());
+            let mut handle_node = plist::Dictionary::new();
 
-
-            match handle.interpolation {
-                InterpolationType::Linear => {handle_node.attributes.insert("interpolation".to_owned(), "linear".to_owned());},
-                InterpolationType::Null => {handle_node.attributes.insert("interpolation".to_owned(), "none".to_owned());}
-            }
+            handle_node.insert("left".to_owned(), plist::Value::String(handle.left_offset.to_string()));
+            handle_node.insert("right".to_owned(), plist::Value::String(handle.right_offset.to_string()));
+            handle_node.insert("tangent".to_owned(), plist::Value::String(handle.tangent_offset.to_string()));
+            handle_node.insert("interpolation".to_owned(), plist::Value::String(handle.interpolation.to_string()));
             
-            vws_node.children.push(xmltree::XMLNode::Element(handle_node));
+            handles.push(plist::Value::Dictionary(handle_node));
         }
-
-        lib_node.children.push(xmltree::XMLNode::Element(vws_node));
+        vws_contour_node.insert("handles".to_owned(), plist::Value::Array(handles));
+        vws_vec.push(plist::Value::Dictionary(vws_contour_node));
     }
+
+    lib_node.insert("io.MFEK.variable_width_stroke".to_string(), plist::Value::Array(vws_vec));
 
     return Some(lib_node);
 }

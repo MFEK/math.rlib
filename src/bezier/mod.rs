@@ -1,7 +1,6 @@
 use super::vector::Vector;
 use glifparser::{WhichHandle};
 
-
 mod evaluate;
 mod primitive;
 mod flo;
