@@ -321,7 +321,7 @@ pub fn variable_width_stroke_glif<U: glifparser::PointData>(path: &Glif<U>, sett
         unicode: path.unicode.clone(),
         name: path.name.clone(),
         format: 2,
-        lib: None,
+        lib: generate_applied_vws_lib(&handles),
         components: path.components.clone(),
         guidelines: path.guidelines.clone(),
         images: path.images.clone(),
@@ -462,8 +462,7 @@ pub fn parse_vws_lib<T: glifparser::PointData>(input: &Glif<T>) -> Option<Vec<VW
     return None;
 }
 
-pub fn generate_vws_lib(vwscontours: &Vec<VWSContour>) -> Option<plist::Dictionary>
-{
+fn generate_vws_lib_impl(vwscontours: &Vec<VWSContour>, applied: bool) -> Option<plist::Dictionary> {
     if vwscontours.len() == 0 {
         return None
     }
@@ -474,6 +473,7 @@ pub fn generate_vws_lib(vwscontours: &Vec<VWSContour>) -> Option<plist::Dictiona
     for vwcontour in vwscontours {
         let mut vws_contour_node = plist::Dictionary::new();
 
+        vws_contour_node.insert("applied".to_owned(), plist::Value::Boolean(applied));
         vws_contour_node.insert("cap_start".to_owned(), plist::Value::String(vwcontour.cap_start_type.to_string()));
         vws_contour_node.insert("cap_end".to_owned(), plist::Value::String(vwcontour.cap_end_type.to_string()));
         vws_contour_node.insert("join".to_owned(), plist::Value::String(vwcontour.join_type.to_string()));
@@ -497,4 +497,12 @@ pub fn generate_vws_lib(vwscontours: &Vec<VWSContour>) -> Option<plist::Dictiona
     lib_node.insert("io.MFEK.variable_width_stroke".to_string(), plist::Value::Array(vws_vec));
 
     return Some(lib_node);
+}
+
+pub fn generate_vws_lib(vwscontours: &Vec<VWSContour>) -> Option<plist::Dictionary> {
+    generate_vws_lib_impl(vwscontours, false)
+}
+
+pub fn generate_applied_vws_lib(vwscontours: &Vec<VWSContour>) -> Option<plist::Dictionary> {
+    generate_vws_lib_impl(vwscontours, true)
 }
