@@ -164,20 +164,32 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
         let tangent_start = cur_handle.tangent_offset;
         let tangent_end = next_handle.tangent_offset;
 
-        let left_closure = |t| {
-            let t2 = (1.-f64::cos(t*std::f64::consts::PI))/2.;
-            return (-left_start*(1.-t2)+-left_end*t2, -tangent_start*left_ratio_start*(1.-t2)+-tangent_end*left_ratio_end*t2);
+        let calc_t2 = |t| (1.-f64::cos(t*std::f64::consts::PI))/2.;
+
+        let left_normal_closure = |t| {
+            let t2 = calc_t2(t);
+            return -left_start*(1.-t2)+-left_end*t2
+        };
+
+        let left_tangent_closure = |t| {
+            let t2 = calc_t2(t);
+            return -tangent_start*left_ratio_start*(1.-t2)+-tangent_end*left_ratio_end*t2
         };
         
-        let right_closure = |t| {
-            let t2 = (1.-f64::cos(t*std::f64::consts::PI))/2.;
-            return (right_start*(1.-t2)+right_end*t2, tangent_start*right_ratio_start*(1.-t2)+tangent_end*right_ratio_end*t2);
+        let right_normal_closure = |t| {
+            let t2 = calc_t2(t);
+            return right_start*(1.-t2)+right_end*t2
         };
 
-        let left_offset = flo_curves::bezier::offset_lms_sampling(bezier, left_closure, 20, 4.0);
+        let right_tangent_closure = |t| {
+            let t2 = calc_t2(t);
+            return tangent_start*right_ratio_start*(1.-t2)+tangent_end*right_ratio_end*t2
+        };
+
+        let left_offset = flo_curves::bezier::offset_lms_sampling(bezier, left_normal_closure, left_tangent_closure, 20, 4.0);
         left_line.append_vec(left_offset.unwrap());
 
-        let right_offset = flo_curves::bezier::offset_lms_sampling(bezier, right_closure, 20, 4.0);
+        let right_offset = flo_curves::bezier::offset_lms_sampling(bezier, right_normal_closure, right_tangent_closure, 20, 4.0);
         right_line.append_vec(right_offset.unwrap());
     }
      
