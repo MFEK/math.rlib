@@ -3,12 +3,13 @@ pub mod glif;
 mod skia;
 mod evaluate;
 
-use super::*;
-use super::consts::SMALL_DISTANCE;
-use super::vector::*;
-use super::bezier::Bezier;
-use super::evaluate::{Evaluate, Primitive};
+use crate::consts::SMALL_DISTANCE;
 
+use crate::arclenparameterization::ArcLengthParameterization;
+use crate::bezier::Bezier;
+use crate::evaluate::Evaluate;
+use crate::primitive::Primitive;
+use crate::vector::Vector;
 
 // This struct models a simple piecewise function. It maps 0-1 such that 0 is the beginning of the first curve
 // in the collection and 1 is the end of the last.

@@ -1,7 +1,11 @@
-use super::Bezier;
-use super::Vector;
-use super::super::evaluate::Primitive;
+use crate::bezier::Bezier;
+use crate::vector::Vector;
 
+// This trait is implemented for a primitive shape like a line, bezier, spiro, etc within the piecewise.
+pub trait Primitive: Sized + Clone
+{
+    fn subdivide(&self, t: f64) -> Option<(Self, Self)> where Self: Sized;
+}
 
 impl Primitive for Bezier {
     // returns two curves one before t and one after

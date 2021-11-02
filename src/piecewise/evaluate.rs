@@ -1,8 +1,6 @@
-
-use super::rect::*;
-
-use super::piecewise::*;
-use super::super::evaluate::*;
+use crate::evaluate::Evaluate;
+use crate::piecewise::Piecewise;
+use crate::rect::Rect;
 
 // Implements the evaluate trait for Piecewise
 impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {

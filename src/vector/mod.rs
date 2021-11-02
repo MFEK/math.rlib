@@ -1,7 +1,7 @@
 #[cfg(feature="default")]
 mod skia;
-mod glif;
-mod flo;
+pub mod glif;
+pub mod flo;
 
 use super::coordinate::Coordinate;
 
@@ -14,7 +14,7 @@ pub struct Vector {
 #[macro_export]
 macro_rules! vec2 {
     ($x: expr, $y: expr) => {
-        Vector {x: $x, y: $y}
+        Vector {x: $x as f64, y: $y as f64} // these f64 don't hurt if passed value already is, yet handle f32
     };
 }
 

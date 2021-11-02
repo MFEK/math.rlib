@@ -8,9 +8,10 @@ pub mod arclenparameterization;
 pub mod consts;
 pub mod evaluate;
 pub mod parameterization;
+pub mod polar;
+pub mod primitive;
 pub mod coordinate;
 pub mod interpolator;
-pub mod glif;
 pub mod glyphbuilder;
 #[cfg(feature="default")]
 pub mod variable_width_stroking;
@@ -23,20 +24,11 @@ pub use self::vector::Vector;
 pub use self::piecewise::Piecewise;
 pub use self::rect::Rect;
 pub use self::bezier::Bezier;
+pub use self::parameterization::Parameterization;
 pub use self::arclenparameterization::ArcLengthParameterization;
 pub use self::glyphbuilder::GlyphBuilder;
+pub use self::primitive::Primitive;
 
 pub use self::evaluate::Evaluate;
 pub use self::evaluate::{EvalScale, EvalRotate, EvalTranslate};
-
-pub use self::parameterization::Parameterization;
-
 pub use self::interpolator::{Interpolator, InterpolationType};
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}

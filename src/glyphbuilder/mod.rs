@@ -1,10 +1,11 @@
 use std::f64::consts;
 
-use super::{Bezier, Evaluate, Piecewise, Vector, EvalScale, EvalTranslate, EvalRotate};
 use glifparser::{Glif};
 
 use flo_curves::line::{line_intersects_line};
-use crate::{consts::SMALL_DISTANCE, evaluate::Primitive, vec2};
+
+use crate::{consts::SMALL_DISTANCE, vec2};
+use crate::{Bezier, Evaluate, Piecewise, Primitive, Vector, EvalScale, EvalTranslate, EvalRotate};
 
 
 #[allow(unused)]

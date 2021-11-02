@@ -68,9 +68,3 @@ impl<T: Evaluate<EvalResult = Vector>> EvalRotate for T {
         return self.apply_transform(&transform);
     }
 }
-
-// This trait is implemented for a primitive shape like a line, bezier, spiro, etc within the piecewise.
-pub trait Primitive: Sized + Clone
-{
-    fn subdivide(&self, t: f64) -> Option<(Self, Self)> where Self: Sized;
-}

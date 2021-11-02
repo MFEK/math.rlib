@@ -1,6 +1,7 @@
+use crate::coordinate::Coordinate as _;
 use super::evaluate::Evaluate;
 use super::parameterization::Parameterization;
-use super::coordinate::*;
+
 // We build a table of total arc length along the line and use it to map 0-1
 // to the arclength of the curve such that 0.5 is halfway along the curve by arc-length
 pub struct ArcLengthParameterization

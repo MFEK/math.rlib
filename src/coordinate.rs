@@ -1,5 +1,5 @@
 use std::cmp::PartialEq;
-use std::ops::*;
+use std::ops::{Add, Mul, Sub};
 
 pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<Self, Output=Self>+Sub<Self, Output=Self>+PartialEq {
     fn magnitude(self) -> f64;
@@ -24,6 +24,5 @@ impl Coordinate for f64 {
 
     fn lerp(self, v1: Self, t: f64) -> Self {
         return (1. - t) * self + t * v1;
-
     }
 }

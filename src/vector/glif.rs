@@ -1,6 +1,18 @@
 use super::Vector;
 use glifparser::{Handle, WhichHandle, PointType};
 
+impl<T> From<&glifparser::Point<T>> for Vector {
+    fn from(p: &glifparser::Point<T>) -> Self {
+        Self::from_point(p)
+    }
+}
+
+impl<T> From<glifparser::Point<T>> for Vector {
+    fn from(p: glifparser::Point<T>) -> Self {
+        Self::from_point(&p)
+    }
+}
+
 impl Vector {
     pub fn from_point<T>(point: &glifparser::Point<T>) -> Self
     {
