@@ -29,27 +29,6 @@ impl Bezier {
     {
         return Bezier { w1: p0, w2: p1, w3: p2, w4: p3};
     }
-    /*
-    pub fn from_points(p0: Vector, p1: Vector, p2: Vector, p3: Vector) -> Self
-    {
-        let x0 = p0.x; let y0 = p0.y;
-        let x1 = p1.x; let y1 = p1.y;
-        let x2 = p2.x; let y2 = p2.y;
-        let x3 = p3.x; let y3 = p3.y;
-
-        Self {
-            A: (x3 - 3. * x2 + 3. * x1 - x0),
-            B: (3. * x2 - 6. * x1 + 3. * x0),
-            C: (3. * x1 - 3. * x0),
-            D: x0,
-            
-            E: (y3 - 3. * y2 + 3. * y1 - y0),
-            F: (3. * y2 - 6. * y1 + 3. * y0),
-            G: (3. * y1 - 3. * y0),
-            H: y0,
-        }
-    }
-    */
 
     pub fn to_control_points(&self) -> [Vector; 4]
     {
