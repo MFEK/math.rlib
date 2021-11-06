@@ -320,7 +320,6 @@ pub fn variable_width_stroke_glif<U: glifparser::PointData>(path: &Glif<U>, sett
         width: path.width,
         unicode: path.unicode.clone(),
         name: path.name.clone(),
-        format: 2,
         lib: generate_applied_vws_lib(&handles),
         components: path.components.clone(),
         guidelines: path.guidelines.clone(),

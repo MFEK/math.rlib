@@ -360,7 +360,6 @@ pub fn pattern_along_glif<U: glifparser::PointData>(path: &Glif<U>, pattern: &Gl
         width: path.width,
         unicode: path.unicode.clone(),
         name: path.name.clone(),
-        format: 2,
         lib: None,
         components: path.components.clone(),
         guidelines: path.guidelines.clone(),
