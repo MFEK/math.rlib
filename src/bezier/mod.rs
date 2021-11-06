@@ -1,5 +1,5 @@
 use super::vector::Vector;
-use glifparser::{WhichHandle};
+use glifparser::{Point as GPPoint, PointData as GPPointData, WhichHandle};
 
 mod evaluate;
 mod flo;
@@ -15,7 +15,7 @@ pub struct Bezier {
 
 impl Bezier {
     // this function should accept lines, quadratic, and cubic segments and return a valid set of cubic bezier coefficients
-    pub fn from<T>(point: &glifparser::Point<T>, next_point: &glifparser::Point<T>) -> Self
+    pub fn from<PD: GPPointData>(point: &GPPoint<PD>, next_point: &GPPoint<PD>) -> Self
     {
         let p = Vector::from_point(point);
         let np = Vector::from_point(next_point);
