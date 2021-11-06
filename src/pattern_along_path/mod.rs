@@ -367,7 +367,6 @@ pub fn pattern_along_glif<U: glifparser::PointData>(path: &Glif<U>, pattern: &Gl
         images: path.images.clone(),
         note: path.note.clone(),
         filename: path.filename.clone(),
-        private_lib: path.private_lib.clone(),
-        private_lib_root: "MFEK",
+        ..Glif::default()
     };
 }
