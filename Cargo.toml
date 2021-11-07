@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies]
 skia-safe = { version = "0", optional = true }
-flo_curves = { git = "https://github.com/MFEK/flo_curves", branch = "new_master" }
+flo_curves = { git = "https://github.com/Logicalshift/flo_curves", branch = "v0.6" }
 #flo_curves = { path = "../flo_curves" } # for development
 xmltree = "0.10"
 plist = { git = "https://github.com/ebarnard/rust-plist", default-features = false }
