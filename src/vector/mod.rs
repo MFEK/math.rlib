@@ -1,5 +1,6 @@
-#[cfg(feature="default")]
+mod conv;
 mod skia;
+
 pub mod glif;
 pub mod flo;
 
@@ -19,43 +20,26 @@ macro_rules! vec2 {
 }
 
 impl Vector {
+    #[cfg(features = "strict")]
     pub fn from_components(x: f64, y: f64) -> Self
     {
-        Vector{ x: x, y: y }
+        assert!(!x.is_nan());
+        assert!(!y.is_nan());
+        assert!(x.is_finite());
+        assert!(y.is_finite());
+        Vector { x, y }
     }
 
-    pub fn to_tuple(self) -> (f32, f32) {
-        return (self.x as f32, self.y as f32);
-    }
-
-    pub fn to_f64_tuple(self) -> (f64, f64) {
-        return (self.x, self.y);
+    #[cfg(not(features = "strict"))]
+    pub fn from_components(x: f64, y: f64) -> Self
+    {
+        Vector { x, y }
     }
 
     pub fn is_near(self, v1: Vector, eps: f64) -> bool
     {
         self.x - v1.x <= eps && self.x - v1.x >= -eps &&
         self.y - v1.y <= eps && self.y - v1.y >= -eps
-    }
-
-    pub fn add(self, v1: Vector) -> Self
-    {
-        Vector {x: self.x + v1.x, y: self.y + v1.y}
-    }
-
-    pub fn sub(self, v1: Vector) -> Self
-    {
-        Vector {x: self.x - v1.x, y: self.y - v1.y}
-    }
-
-    pub fn mul(self, v1: Vector) -> Self
-    {
-        vec2!(self.x * v1.x, self.y * v1.y)
-    }
-
-    pub fn multiply_scalar(self, s: f64) -> Self
-    {
-        Vector {x: self.x * s, y: self.y * s}
     }
 
     pub fn magnitude(self) -> f64
@@ -105,42 +89,6 @@ impl Vector {
 
         return rotated_point + pivot;
     }
-}
-
-impl std::cmp::PartialEq for Vector {
-    fn eq(&self, other: &Self) -> bool {
-        return self.x == other.x && self.y == other.y;
-    }
-}
-
-impl std::ops::Add<Vector> for Vector {
-    type Output = Vector;
-    
-    fn add(self, v1: Vector) -> Vector { return self.add(v1);}
-}
-
-impl std::ops::Sub<Vector> for Vector {
-    type Output = Vector;
-    
-    fn sub(self, v1: Vector) -> Vector { return self.sub(v1);}
-}
-
-impl std::ops::Mul<Vector> for Vector {
-    type Output = Vector;
-    
-    fn mul(self, s: Vector) -> Vector { return self.mul(s);}
-}
-
-impl std::ops::Mul<f64> for Vector {
-    type Output = Vector;
-    
-    fn mul(self, s: f64) -> Vector { return self.multiply_scalar(s);}
-}
-
-impl std::ops::Neg for Vector {
-    type Output = Vector;
-
-    fn neg(self) -> Vector { Vector{x: -self.x, y: -self.y} }
 }
 
 impl Coordinate for Vector {

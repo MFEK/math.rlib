@@ -19,3 +19,4 @@ glifparser = { git = "https://github.com/MFEK/glifparser.rlib", branch = "master
 
 [features]
 default = ["skia-safe", "glifparser/skia", "glifparser/mfek"]
+strict = []

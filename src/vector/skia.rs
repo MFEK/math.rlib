@@ -1,3 +1,5 @@
+#![cfg(feature="default")]
+
 use super::Vector;
 
 impl Vector {
