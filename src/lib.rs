@@ -18,7 +18,9 @@ pub mod variable_width_stroking;
 #[cfg(feature="default")]
 pub mod pattern_along_path;
 #[cfg(feature="default")]
-pub use {skia_safe, self::{variable_width_stroking::*, pattern_along_path::*}};
+pub mod dash_along_path;
+#[cfg(feature="default")]
+pub use {skia_safe, self::{variable_width_stroking::*, pattern_along_path::*, dash_along_path::*}};
 
 pub use self::vector::Vector;
 pub use self::piecewise::Piecewise;
