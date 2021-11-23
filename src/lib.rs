@@ -7,6 +7,7 @@ pub mod bezier;
 pub mod arclenparameterization;
 pub mod consts;
 pub mod evaluate;
+pub(crate) mod fixup;
 pub mod parameterization;
 pub mod polar;
 pub mod primitive;
@@ -33,4 +34,5 @@ pub use self::primitive::Primitive;
 
 pub use self::evaluate::Evaluate;
 pub use self::evaluate::{EvalScale, EvalRotate, EvalTranslate};
+pub use self::fixup::Fixup;
 pub use self::interpolator::{Interpolator, InterpolationType};
