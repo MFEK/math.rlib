@@ -11,15 +11,6 @@ fn find_side(left: Vector, right: Vector, point: Vector) -> i32 {
         -1
     }
 }
-// fn include_points(points: Vec<Vector>, left: Vector, right: Vector, side: i32) -> Vec<Vector> {
-//     let mut result = Vec::<Vector>::new();
-//     for point in points.iter() {
-//         if find_side(left.clone(), right.clone(), *point) == side {
-//             result.push(*point)
-//         }
-//     }
-//     result
-// }
 fn quick_hull(
     points: &Vec<Vector>,
     left: Vector,
@@ -58,7 +49,8 @@ fn quick_hull(
         hull,
     );
 }
-pub fn simplify(points: Vec<Vector>) {
+#[allow(non_snake_case, unused)]
+pub fn quickHull<T>(points: Vec<Vector>) {
     let mut hull = Vec::<Vector>::new();
     let mut maxx = 0.;
     let mut minx = 0.;
