@@ -1,4 +1,4 @@
-use MFEKmath::Vector;
+use crate::Vector;
 
 fn find_dist(left: Vector, right: Vector, point: Vector) -> f64 {
     f64::abs((point.y - left.y) * (right.x - left.x) - (right.y - left.y) * (point.x - left.x))
