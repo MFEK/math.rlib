@@ -62,7 +62,7 @@ impl GlyphBuilder {
         self.beziers.push(bez);
     }
 
-    // need to mvoe this stuff to it's own struct or use flo_curves PathBuilder
+    // need to move this stuff to it's own struct or use flo_curves PathBuilder
     pub fn line_to(&mut self, to: Vector) {
         let from = self.beziers.last().unwrap().end_point();
         let line = Bezier::from_points(from, from, to, to);
