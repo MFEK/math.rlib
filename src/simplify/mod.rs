@@ -10,8 +10,8 @@ pub fn simplify(point: Outline<()>) -> Outline<()> {
 }
 fn solution(points: &mut Contour<()>) {
     let n = points.len();
-    for starti in 0..n {
-        for i in (starti + 1)..n {
+    for starti in 0..n - 2 {
+        for i in (starti + 1)..n - 1 {
             let P1 = points[starti].clone();
             let P2 = points[i].clone();
             let P3 = points[i + 1].clone();
