@@ -1,13 +1,14 @@
-use glifparser::Point;
-
-pub fn simplify(point: Vec<Vec<Point<()>>>) {
+use glifparser::{Contour, Outline, Point};
+pub mod get_control_points;
+pub fn simplify(point: Outline<()>) -> Outline<()> {
     let mut points = point.clone();
     drop(point);
     for i in points.iter_mut() {
         solution(i);
     }
+    points
 }
-fn solution(points: &mut Vec<Point<()>>) {
+fn solution(points: &mut Contour<()>) {
     let n = points.len();
     for starti in 0..n {
         for i in (starti + 1)..n {

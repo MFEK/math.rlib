@@ -23,6 +23,7 @@ pub mod simplify;
 #[cfg(feature = "default")]
 pub mod variable_width_stroking;
 pub mod vector;
+
 #[cfg(feature = "default")]
 pub use {
     self::{dash_along_path::*, pattern_along_path::*, variable_width_stroking::*},
