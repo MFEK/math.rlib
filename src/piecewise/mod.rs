@@ -28,8 +28,8 @@ impl<T: Evaluate> Piecewise<T> {
         match cuts {
             Some(cuts) => {
                 return Self {
-                    cuts: cuts,
-                    segs: segs
+                    cuts,
+                    segs
                 }
             }
             
@@ -48,7 +48,7 @@ impl<T: Evaluate> Piecewise<T> {
 
                 return Self {
                     cuts: out_cuts,
-                    segs: segs
+                    segs
                 }
             }
         }

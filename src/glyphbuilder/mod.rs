@@ -1,8 +1,8 @@
 use std::f64::consts;
 
-use glifparser::{Glif};
+use glifparser::Glif;
 
-use flo_curves::line::{line_intersects_line};
+use flo_curves::line::line_intersects_line;
 
 use crate::{consts::SMALL_DISTANCE, vec2};
 use crate::{Bezier, Evaluate, Piecewise, Primitive, Vector, EvalScale, EvalTranslate, EvalRotate};

@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
 use super::{Bezier, Evaluate, Piecewise, Vector, GlyphBuilder};
-use super::consts::{SMALL_DISTANCE};
+use super::consts::SMALL_DISTANCE;
 use glifparser::{Glif, JoinType, Outline, VWSContour, glif::{CapType, InterpolationType, MFEKPointData, VWSHandle}};
 
 #[derive(Debug)]
@@ -395,9 +395,9 @@ pub fn parse_vws_lib<T: glifparser::PointData>(input: &Glif<T>) -> Option<Vec<VW
 
             let mut vws_handles = VWSContour {
                 handles: Vec::new(),
-                cap_start_type: cap_start_type,
-                cap_end_type: cap_end_type,
-                join_type: join_type,
+                cap_start_type,
+                cap_end_type,
+                join_type,
                 remove_internal: false, // TODO: Add these to <lib>
                 remove_external: false,
             };
@@ -445,7 +445,7 @@ pub fn parse_vws_lib<T: glifparser::PointData>(input: &Glif<T>) -> Option<Vec<VW
                     left_offset: left,
                     right_offset: right,
                     tangent_offset: tangent,
-                    interpolation: interpolation
+                    interpolation
                 });
             }
 

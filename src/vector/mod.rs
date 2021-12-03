@@ -1,8 +1,8 @@
 mod conv;
 mod skia;
 
-pub mod glif;
 pub mod flo;
+pub mod glif;
 
 use super::coordinate::Coordinate;
 
@@ -15,14 +15,16 @@ pub struct Vector {
 #[macro_export]
 macro_rules! vec2 {
     ($x: expr, $y: expr) => {
-        Vector {x: $x as f64, y: $y as f64} // these f64 don't hurt if passed value already is, yet handle f32
+        Vector {
+            x: $x as f64,
+            y: $y as f64,
+        } // these f64 don't hurt if passed value already is, yet handle f32
     };
 }
 
 impl Vector {
     #[cfg(features = "strict")]
-    pub fn from_components(x: f64, y: f64) -> Self
-    {
+    pub fn from_components(x: f64, y: f64) -> Self {
         assert!(!x.is_nan());
         assert!(!y.is_nan());
         assert!(x.is_finite());
@@ -31,45 +33,43 @@ impl Vector {
     }
 
     #[cfg(not(features = "strict"))]
-    pub fn from_components(x: f64, y: f64) -> Self
-    {
+    pub fn from_components(x: f64, y: f64) -> Self {
         Vector { x, y }
     }
 
-    pub fn is_near(self, v1: Vector, eps: f64) -> bool
-    {
-        self.x - v1.x <= eps && self.x - v1.x >= -eps &&
-        self.y - v1.y <= eps && self.y - v1.y >= -eps
+    pub fn is_near(self, v1: Vector, eps: f64) -> bool {
+        self.x - v1.x <= eps
+            && self.x - v1.x >= -eps
+            && self.y - v1.y <= eps
+            && self.y - v1.y >= -eps
     }
 
-    pub fn magnitude(self) -> f64
-    {
+    pub fn magnitude(self) -> f64 {
         f64::sqrt(f64::powi(self.x, 2) + f64::powi(self.y, 2))
     }
-    
-    pub fn distance(self, v1: Vector) -> f64
-    {
+
+    pub fn distance(self, v1: Vector) -> f64 {
         let v0 = self;
         f64::sqrt(f64::powi(v1.x - v0.x, 2) + f64::powi(v1.y - v0.y, 2))
     }
 
-    pub fn normalize(self) -> Self
-    {
+    pub fn normalize(self) -> Self {
         let magnitude = self.magnitude();
-        Vector { x: self.x / magnitude, y: self.y / magnitude }
+        Vector {
+            x: self.x / magnitude,
+            y: self.y / magnitude,
+        }
     }
 
-    pub fn dot(self, v1: Vector) -> f64
-    {
+    pub fn dot(self, v1: Vector) -> f64 {
         self.x * v1.x + self.y * v1.y
     }
 
-    pub fn lerp(self, v1:Vector, t: f64) -> Self
-    {
+    pub fn lerp(self, v1: Vector, t: f64) -> Self {
         let v0 = self;
         Vector {
             x: (1. - t) * v0.x + t * v1.x,
-            y: (1. - t) * v0.y + t * v1.y
+            y: (1. - t) * v0.y + t * v1.y,
         }
     }
 
@@ -92,18 +92,18 @@ impl Vector {
 }
 
 impl Coordinate for Vector {
-    fn magnitude(self) -> f64 
-    {
+    fn magnitude(self) -> f64 {
         self.magnitude()
     }
 
-    fn distance(self, v1: Self) -> f64
-    {
+    fn distance(self, v1: Self) -> f64 {
         self.distance(v1)
     }
 
-    fn lerp(self, v1: Self, t: f64) -> Self
-    {
+    fn lerp(self, v1: Self, t: f64) -> Self {
         self.lerp(v1, t)
     }
+}
+pub fn vector(x: f64, y: f64) -> Vector {
+    Vector::from_components(x, y)
 }

@@ -2,7 +2,7 @@ use super::{ArcLengthParameterization, Bezier, Evaluate, EvalScale, EvalTranslat
 use crate::vec2;
 
 use glifparser::{Glif, Outline, glif::{PAPContour, PatternCopies, PatternSubdivide, PatternStretch}};
-use skia_safe::{Path};
+use skia_safe::Path;
 
 // At some point soon I want to restructure this algorithm. The current two pass 
 #[derive(Debug, Clone)]
