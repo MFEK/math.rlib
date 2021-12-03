@@ -295,7 +295,7 @@ fn pattern_along_path(path: &Piecewise<Bezier>, pattern: &Piecewise<Piecewise<Be
     return Piecewise::new(output_segments, None);
 }
 
-pub fn pattern_along_path_mfek(path: &Piecewise<Bezier>, settings: &PAPContour) -> Piecewise<Piecewise<Bezier>>
+pub fn pattern_along_path_mfek<PD: glifparser::PointData>(path: &Piecewise<Bezier>, settings: &PAPContour<PD>) -> Piecewise<Piecewise<Bezier>>
 {
     // we're only doing this to avoid a circular dependency
     let split_settings = PatternSettings {
