@@ -2,12 +2,12 @@ use std::collections::VecDeque;
 
 use super::{Bezier, Evaluate, Piecewise, Vector, GlyphBuilder};
 use super::consts::{SMALL_DISTANCE};
-use glifparser::{Glif, JoinType, Outline, VWSContour, glif::{CapType, InterpolationType, MFEKPointData, VWSHandle}};
+use glifparser::{Glif, JoinType, Outline, PointData, VWSContour, glif::{CapType, InterpolationType, VWSHandle}};
 
 #[derive(Debug)]
-pub struct VWSSettings {
-    pub cap_custom_start: Option<Glif<MFEKPointData>>,
-    pub cap_custom_end: Option<Glif<MFEKPointData>>,
+pub struct VWSSettings<PD: PointData> {
+    pub cap_custom_start: Option<Glif<PD>>,
+    pub cap_custom_end: Option<Glif<PD>>,
 }
 
 // we want to deal with colocated handles here so that we don't get funky results at caps and joins
@@ -124,7 +124,7 @@ fn fix_path(in_path: GlyphBuilder, closed: bool, join_type: JoinType) -> GlyphBu
     return out;
 }
 
-pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour, settings: &VWSSettings) -> Piecewise<Piecewise<Bezier>> {
+pub fn variable_width_stroke<PD: PointData>(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour, settings: &VWSSettings<PD>) -> Piecewise<Piecewise<Bezier>> {
     let in_pw = preprocess_path(in_pw);
 
     let closed = in_pw.is_closed();
@@ -283,11 +283,11 @@ pub fn variable_width_stroke(in_pw: &Piecewise<Bezier>, vws_contour: &VWSContour
     } 
 }
 
-pub fn variable_width_stroke_glif<U: glifparser::PointData>(path: &Glif<U>, settings: VWSSettings) -> Glif<MFEKPointData>
+pub fn variable_width_stroke_glif<PD: glifparser::PointData>(path: &Glif<PD>, settings: VWSSettings<PD>) -> Glif<PD>
 {
     // convert our path and pattern to piecewise collections of beziers
     let piece_path = Piecewise::from(path.outline.as_ref().unwrap());
-    let mut output_outline: Outline<MFEKPointData> = Vec::new();
+    let mut output_outline: Outline<PD> = Vec::new();
 
     let handles = parse_vws_lib(path);
 
