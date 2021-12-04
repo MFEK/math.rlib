@@ -3,7 +3,7 @@ use glifparser::{Contour, Point, PointType};
 
 pub fn get_curve_control_point(knots: Contour<()>) -> Result<(Contour<()>, Contour<()>), String> {
     let n = knots.len() - 1;
-    dbg!(&n);
+    // dbg!(&n);
     if n < 1 {
         return Err(String::from("Atleast two points are required"));
     }
@@ -62,7 +62,7 @@ pub fn get_curve_control_point(knots: Contour<()>) -> Result<(Contour<()>, Conto
 
 fn get_first_control_points(rhs: Vec<f32>) -> Vec<f32> {
     let n = rhs.len();
-    dbg!(&n);
+    // dbg!(&n);
     let mut x = Vec::<f32>::new(); //solution vector
     let mut tmp = Vec::<f32>::new();
     let mut b = 2.;
