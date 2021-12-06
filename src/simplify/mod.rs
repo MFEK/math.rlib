@@ -5,7 +5,6 @@ pub fn simplify(point: Outline<()>) -> Outline<()> {
     drop(point);
     let mut result: Outline<()> = Vec::new();
     for i in points.iter() {
-        
         let result_a = get_control_points::get_curve_control_point(solution(i.clone())).unwrap();
 
         result.push(result_a.0);
@@ -35,7 +34,7 @@ fn solution(points: Contour<()>) -> Contour<()> {
             n = points.len();
         }
         starti += 1;
-        dbg!(&n);
+        // dbg!(&n);
     }
     points
 }
