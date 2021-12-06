@@ -33,7 +33,6 @@ pub use self::parameterization::Parameterization;
 pub use self::piecewise::Piecewise;
 pub use self::primitive::Primitive;
 pub use self::rect::Rect;
-pub use self::vector::vector;
 pub use self::vector::Vector;
 
 pub use self::evaluate::Evaluate;

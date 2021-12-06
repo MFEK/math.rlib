@@ -53,11 +53,3 @@ impl Bezier {
         Bezier::from_points(bz[3], bz[2], bz[1], bz[0])
     }
 }
-pub fn bezier(p0: Vector, p1: Vector, p2: Vector, p3: Vector) -> Bezier {
-    return Bezier {
-        w1: p0,
-        w2: p1,
-        w3: p2,
-        w4: p3,
-    };
-}

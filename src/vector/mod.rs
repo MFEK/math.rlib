@@ -104,6 +104,3 @@ impl Coordinate for Vector {
         self.lerp(v1, t)
     }
 }
-pub fn vector(x: f64, y: f64) -> Vector {
-    Vector::from_components(x, y)
-}
