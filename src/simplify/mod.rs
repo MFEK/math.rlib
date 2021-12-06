@@ -1,7 +1,7 @@
 use glifparser::{Contour, Outline, Point};
 pub mod get_control_points;
 pub fn simplify(point: Outline<()>) -> Outline<()> {
-    let mut points = point.clone();
+    let points = point.clone();
     drop(point);
     let mut result: Outline<()> = Vec::new();
     for i in points.iter() {
