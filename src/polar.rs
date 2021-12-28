@@ -8,8 +8,12 @@ use crate::bezier::Bezier;
 use crate::vector::Vector;
 
 pub trait PolarCoordinates {
+    /// Considering the point location as the origin, returns handle's position in Cartesian
+    /// coordinates (irrespective of glyph origin)
     fn cartesian(&self, wh: WhichHandle) -> (f32, f32);
+    /// Returns theta (ϑ) in radians (_Cf._ [`f32::to_radians`])
     fn polar(&self, wh: WhichHandle) -> (f32, f32);
+    /// Expects theta (ϑ) in degrees (_Cf._ [`f32::to_degrees`])
     fn set_polar(&mut self, wh: WhichHandle, polar: (f32, f32));
 }
 
