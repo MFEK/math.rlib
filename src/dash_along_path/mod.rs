@@ -9,8 +9,11 @@ use skia::{PathEffect, StrokeRec};
 use log;
 
 fn make_dash_effect(skp: &skia::Path, dash_desc: &[f32]) -> PathEffect {
-    let mut measure = skia::PathMeasure::from_path(&skp, false, Some(10.));
-    let slen = measure.length();
+    let mut measure = skia::PathMeasure::from_path(&skp, false, None);
+    let mut slen = measure.length();
+    while measure.next_contour() {
+        slen += measure.length();
+    }
     let mut desc = dash_desc.to_vec();
     let dash_len: f32 = desc.iter().sum();
     let s_g = slen / dash_len;
