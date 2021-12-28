@@ -18,10 +18,9 @@ fn make_dash_effect(skp: &skia::Path, dash_desc: &[f32]) -> PathEffect {
     let dash_len: f32 = desc.iter().sum();
     let s_g = slen / dash_len;
     let m = s_g - s_g.floor();
-    let w = if m.is_nan() { 0. } else { dash_len * m };
-    let desc_len = desc.iter().filter(|d|**d!=0.).collect::<Vec<_>>().len();
-    let w_d = w / s_g / desc_len as f32;
-    desc.iter_mut().for_each(|f|if *f != 0.0 { *f+=w_d });
+    let w = if m.is_nan() { dash_len } else { dash_len * m };
+    let w_d = w / s_g as f32;
+    desc.iter_mut().skip(1).step_by(2).for_each(|f|{ *f+=w_d });
     log::trace!("slen {}, dash_len {} → s/g {} → m {} → w {}, w_d {}", slen, dash_len, s_g, m, w, w_d);
     let w_a = w_d * desc.len() as f32;
     if w_a > 1.0 {
