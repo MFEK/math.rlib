@@ -31,9 +31,10 @@ fn make_dash_effect(skp: &skia::Path, dash_desc: &[f32]) -> PathEffect {
 
 use std::mem;
 
-pub fn dash_along_glif<PD: glifparser::PointData>(path: &Glif<PD>, settings: &DashContour) -> Glif<PD> {
-    let mut path = path.clone();
-    let skp = path.outline.unwrap().to_skia_paths(None).combined();
+pub fn dash_along_glif<PD: glifparser::PointData>(glif: &Glif<PD>, settings: &DashContour) -> Glif<PD> {
+    let oglif = glif; // keep a reference to original data around
+    let mut glif = glif.clone();
+    let skp = glif.outline.unwrap().to_skia_paths(None).combined();
     let p_e = make_dash_effect(&skp, &settings.dash_desc);
 
     let mut paint = skia::Paint::default();
@@ -77,7 +78,13 @@ pub fn dash_along_glif<PD: glifparser::PointData>(path: &Glif<PD>, settings: &Da
             }
 
             if settings.stroke_width != 0.0 {
-                final_skpath = final_skpath.op(&skp_o_s, skia::PathOp::Union).unwrap();
+                match final_skpath.op(&skp_o_s, skia::PathOp::Union) {
+                    Some(fsk) => { final_skpath = fsk; }
+                    None => {
+                        log::error!("While working on glif `{}`, ran into a skia::PathOp::Union that refused to resolve. This is likely a Skia bug; downgrading to overlapping splines. (Consider testing w/MFEKpathops BOOLEAN)", &oglif.name);
+                        final_skpath.add_path(&skp_o_s, (0., 0.), None);
+                    }
+                }
             } else {
                 final_skpath.add_path(&skp_o_s, (0., 0.), None);
             }
@@ -120,6 +127,6 @@ pub fn dash_along_glif<PD: glifparser::PointData>(path: &Glif<PD>, settings: &Da
         }
     }
 
-    path.outline = Some(final_output);
-    path
+    glif.outline = Some(final_output);
+    glif
 }
