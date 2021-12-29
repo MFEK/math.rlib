@@ -8,20 +8,23 @@ use skia::{PathEffect, StrokeRec};
 
 use log;
 
-fn make_dash_effect(skp: &skia::Path, dash_desc: &[f32]) -> PathEffect {
+fn make_dash_effect(skp: &skia::Path, settings: &DashContour) -> PathEffect {
     let mut measure = skia::PathMeasure::from_path(&skp, false, None);
     let mut slen = measure.length();
     while measure.next_contour() {
         slen += measure.length();
     }
-    let mut desc = dash_desc.to_vec();
-    let dash_len: f32 = desc.iter().sum();
-    let s_g = slen / dash_len;
+    let mut desc = settings.dash_desc.to_vec();
+    let dash_len = desc.iter().sum::<f32>() - if settings.paint_cap == skia::PaintCap::Round as u8 { settings.stroke_width } else { 0. };
+    let gap_len = desc.iter().skip(1).step_by(2).sum::<f32>();
+    let s_g = slen / gap_len;
+    let s_d = slen / dash_len;
     let m = s_g - s_g.floor();
-    let w = if m.is_nan() { dash_len } else { dash_len * m };
-    let w_d = w / s_g as f32;
+    let w = if m.is_nan() { 0. } else { gap_len * m };
+    let desc_len = desc.iter().skip(1).step_by(2).collect::<Vec<_>>().len() as f32;
+    let w_d = (w / s_d / desc_len) as f32;
     desc.iter_mut().skip(1).step_by(2).for_each(|f|{ *f+=w_d });
-    log::trace!("slen {}, dash_len {} → s/g {} → m {} → w {}, w_d {}", slen, dash_len, s_g, m, w, w_d);
+    log::trace!("slen {}, gap_len {} → s/g {} → m {} → w {}, w_d {}", slen, gap_len, s_g, m, w, w_d);
     let w_a = w_d * desc.len() as f32;
     if w_a > 1.0 {
         log::warn!("Added {} of flutter to dashes ({} over {} segments)", w_a, w_d, desc.len());
@@ -35,7 +38,7 @@ pub fn dash_along_glif<PD: glifparser::PointData>(glif: &Glif<PD>, settings: &Da
     let oglif = glif; // keep a reference to original data around
     let mut glif = glif.clone();
     let skp = glif.outline.unwrap().to_skia_paths(None).combined();
-    let p_e = make_dash_effect(&skp, &settings.dash_desc);
+    let p_e = make_dash_effect(&skp, &settings);
 
     let mut paint = skia::Paint::default();
     use skia::{PaintJoin, PaintCap};
