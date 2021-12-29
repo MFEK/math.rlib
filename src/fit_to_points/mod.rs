@@ -1,6 +1,6 @@
-use crate::get_control_points;
+mod get_control_points;
 use glifparser::{Contour, Handle, Outline, PointType};
-pub fn create(outline: Outline<()>) -> Outline<()> {
+pub fn fit(outline: Outline<()>) -> Outline<()> {
     let mut result_outline: Outline<()> = Vec::new();
     for contour in outline.iter() {
         let mut final_contour: Contour<()> = Vec::new();

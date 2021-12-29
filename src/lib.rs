@@ -6,8 +6,8 @@ pub mod coordinate;
 #[cfg(feature = "default")]
 pub mod dash_along_path;
 pub mod evaluate;
+pub mod fit_to_points;
 pub(crate) mod fixup;
-pub mod get_control_points;
 pub mod glyphbuilder;
 pub mod interpolator;
 pub mod parameterization;
@@ -17,7 +17,6 @@ pub mod piecewise;
 pub mod polar;
 pub mod primitive;
 pub mod rect;
-pub mod create_bazier;
 #[cfg(feature = "default")]
 pub mod variable_width_stroking;
 pub mod vector;
