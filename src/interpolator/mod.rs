@@ -37,8 +37,8 @@ impl Interpolator {
     pub fn new_none(start: f64, finish: f64) -> Self
     {
         Interpolator {
-            start: start,
-            finish: finish,
+            start,
+            finish,
             func: Self::interpolate_none
         }
     }
@@ -46,8 +46,8 @@ impl Interpolator {
     pub fn new_linear(start: f64, finish: f64) -> Self
     {
         Interpolator {
-            start: start,
-            finish: finish,
+            start,
+            finish,
             func: Self::interpolate_linear
         }
     }
@@ -55,8 +55,8 @@ impl Interpolator {
     pub fn new_exponential(start: f64, finish: f64) -> Self
     {
         Interpolator {
-            start: start,
-            finish: finish,
+            start,
+            finish,
             func: Self::interpolate_exponential
         }
     }
