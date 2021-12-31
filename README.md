@@ -5,7 +5,7 @@ This library provides the math functions that provide Pattern-Along-Path, Variab
 ## License
 
 ```
-Copyright 2021 Matthew Blanchard, Fredrick R. Brennan & MFEK Authors
+Copyright 2021 Matthew Blanchard, Fredrick R. Brennan, T. Prajwal Prabhu & MFEK Authors
 
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use
 this software or any of the provided source code files except in compliance
