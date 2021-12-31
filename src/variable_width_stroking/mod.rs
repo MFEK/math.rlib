@@ -2,7 +2,7 @@ use std::collections::VecDeque;
 
 use super::{Bezier, Evaluate, Piecewise, Vector, GlyphBuilder};
 use super::consts::SMALL_DISTANCE;
-use glifparser::{Glif, JoinType, Outline, VWSContour, glif::{CapType, InterpolationType, MFEKPointData, VWSHandle}};
+use glifparser::{Glif, JoinType, Outline, PointData, VWSContour, glif::{CapType, InterpolationType, VWSHandle}};
 
 #[derive(Debug)]
 pub struct VWSSettings<PD: PointData> {
