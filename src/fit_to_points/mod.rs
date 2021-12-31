@@ -41,18 +41,18 @@ fn solve(contour: Vec<glifparser::Point<()>>) -> Vec<glifparser::Point<()>> {
     }
     let result = get_control_points::get_curve_control_point(contour.clone());
     let mut contour = contour;
-    contour[0].a = Handle::At(result.0[0].x, result.0[0].y);
+    contour[0].a = Handle::At(result.0[0].0, result.0[0].1);
     for i in 0..contour.len() - 1 {
         contour[i].a = {
             if let Some(a) = result.0.get(i) {
-                Handle::At(a.x, a.y)
+                Handle::At(a.0, a.1)
             } else {
                 Handle::Colocated
             }
         };
         contour[i + 1].b = {
             if let Some(a) = result.1.get(i) {
-                Handle::At(a.x, a.y)
+                Handle::At(a.0, a.1)
             } else {
                 Handle::Colocated
             }

@@ -1,29 +1,23 @@
-use glifparser::{Contour, Point, PointType};
+use glifparser::Contour;
 // https://www.codeproject.com/Articles/31859/Draw-a-Smooth-Curve-through-a-Set-of-2D-Points-wit
 
-pub fn get_curve_control_point(knots: Contour<()>) -> (Contour<()>, Contour<()>) {
+pub fn get_curve_control_point(knots: Contour<()>) -> (Vec<(f32, f32)>, Vec<(f32, f32)>) {
     let n = knots.len() - 1;
 
-    let mut first_control_point = Contour::new();
-    let mut second_control_point = Contour::new();
+    let mut first_control_point: Vec<(f32, f32)> = Vec::new();
+    let mut second_control_point: Vec<(f32, f32)> = Vec::new();
     if n == 1 {
         // Special case: Bezier curve should be a straight line.
         // 3P1 = 2P0 + P3
 
-        first_control_point.push(Point::from_x_y_type(
-            (
-                (2. * knots[0].x + knots[1].x) / 3.,
-                (2. * knots[0].y + knots[1].y) / 3.,
-            ),
-            PointType::Undefined,
+        first_control_point.push((
+            (2. * knots[0].x + knots[1].x) / 3.,
+            (2. * knots[0].y + knots[1].y) / 3.,
         ));
         // P2 = 2P1 – P0
-        second_control_point.push(Point::from_x_y_type(
-            (
-                2. * first_control_point[0].x - knots[0].x,
-                2. * first_control_point[0].y - knots[0].y,
-            ),
-            PointType::Undefined,
+        second_control_point.push((
+            2. * first_control_point[0].0 - knots[0].x,
+            2. * first_control_point[0].1 - knots[0].y,
         ));
     } else {
         // Calculate first Bezier control points
@@ -47,20 +41,15 @@ pub fn get_curve_control_point(knots: Contour<()>) -> (Contour<()>, Contour<()>)
         let y = get_first_control_points(rhs);
         // Fill output arrays
         for i in 0..n {
-            first_control_point.push(Point::from_x_y_type((x[i], y[i]), PointType::Undefined));
+            first_control_point.push((x[i], y[i]));
             if i < n - 1 {
-                second_control_point.push(Point::from_x_y_type(
-                    (
-                        2. * knots[i + 1].x - x[i + 1],
-                        2. * knots[i + 1].y - y[i + 1],
-                    ),
-                    PointType::Undefined,
+                second_control_point.push((
+                    2. * knots[i + 1].x - x[i + 1],
+                    2. * knots[i + 1].y - y[i + 1],
                 ));
             } else {
-                second_control_point.push(Point::from_x_y_type(
-                    ((knots[n].x + x[n - 1]) / 2., (knots[n].y + y[n - 1]) / 2.),
-                    PointType::Undefined,
-                ))
+                second_control_point
+                    .push(((knots[n].x + x[n - 1]) / 2., (knots[n].y + y[n - 1]) / 2.))
             }
         }
     }
