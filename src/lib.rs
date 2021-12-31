@@ -1,5 +1,4 @@
 #![allow(non_snake_case)] // for our name MFEKmath
-
 pub mod arclenparameterization;
 pub mod bezier;
 pub mod consts;
@@ -7,6 +6,7 @@ pub mod coordinate;
 #[cfg(feature = "default")]
 pub mod dash_along_path;
 pub mod evaluate;
+pub mod fit_to_points;
 pub(crate) mod fixup;
 pub mod glyphbuilder;
 pub mod interpolator;
@@ -20,6 +20,7 @@ pub mod rect;
 #[cfg(feature = "default")]
 pub mod variable_width_stroking;
 pub mod vector;
+
 #[cfg(feature = "default")]
 pub use {
     self::{dash_along_path::*, pattern_along_path::*, variable_width_stroking::*},

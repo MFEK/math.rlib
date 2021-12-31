@@ -30,7 +30,7 @@ fn prepare_pattern(pattern: &Piecewise<Piecewise<Bezier>>, arclenparam: &ArcLeng
     ->  Vec<Piecewise<Piecewise<Bezier>>>
 {
     let mut output: Vec<Piecewise<Piecewise<Bezier>>> = Vec::new();
-
+    
     // we clone our original pattern so we can work with it and have ownership
     // there is definitely a better faster way of doing this, but my rust knowledge is holding me back
     let mut working_pattern = pattern.translate(vec2!(1., 1.));
