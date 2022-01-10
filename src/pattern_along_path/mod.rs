@@ -1,7 +1,7 @@
 use super::{ArcLengthParameterization, Bezier, Evaluate, EvalScale, EvalTranslate, Parameterization, Piecewise, Vector, Rect};
 use crate::vec2;
 
-use glifparser::{Glif, Outline, glif::{PAPContour, PatternCopies, PatternSubdivide, PatternStretch}};
+use glifparser::{Glif, Outline, glif::{Lib, PAPContour, PatternCopies, PatternSubdivide, PatternStretch}};
 use skia_safe::Path;
 
 // At some point soon I want to restructure this algorithm. The current two pass 
@@ -360,7 +360,7 @@ pub fn pattern_along_glif<U: glifparser::PointData>(path: &Glif<U>, pattern: &Gl
         width: path.width,
         unicode: path.unicode.clone(),
         name: path.name.clone(),
-        lib: None,
+        lib: Lib::None,
         components: path.components.clone(),
         guidelines: path.guidelines.clone(),
         images: path.images.clone(),
