@@ -17,6 +17,7 @@ pub mod piecewise;
 pub mod polar;
 pub mod primitive;
 pub mod rect;
+pub mod simplify;
 #[cfg(feature = "default")]
 pub mod variable_width_stroking;
 pub mod vector;
