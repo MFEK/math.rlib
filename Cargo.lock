@@ -311,7 +311,7 @@ dependencies = [
 [[package]]
 name = "glifparser"
 version = "1.2.0"
-source = "git+https://github.com/MFEK/glifparser.rlib?branch=master#01e0d08b87ac9c4ed5c9f2da4015f158f06ee91d"
+source = "git+https://github.com/MFEK/glifparser.rlib?branch=master#fd13591e1af13cc25305d27938673b6f5a803e11"
 dependencies = [
  "derivative",
  "derive_more",
