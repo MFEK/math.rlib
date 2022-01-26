@@ -3,6 +3,7 @@ use std::collections::VecDeque;
 use super::{Bezier, Evaluate, Piecewise, Vector, GlyphBuilder};
 use super::consts::SMALL_DISTANCE;
 use glifparser::{Glif, JoinType, Outline, PointData, VWSContour, glif::{CapType, InterpolationType, VWSHandle}};
+use glifparser::glif::Lib as GlifLib;
 
 #[derive(Debug)]
 pub struct VWSSettings<PD: PointData> {
@@ -337,8 +338,12 @@ pub fn find_vws_contour(id: usize, vws_outline: &Vec<VWSContour>) -> Option<&VWS
 
 pub fn parse_vws_lib<T: glifparser::PointData>(input: &Glif<T>) -> Option<Vec<VWSContour>>
 {
-    if !input.lib.is_some() { return None }
-    if let Some(lib) = input.lib.as_ref().unwrap().get("io.MFEK.variable_width_stroke") {
+    let lib = if let GlifLib::Plist(ref lib) = input.lib {
+        lib
+    } else {
+        return None
+    };
+    if let Some(lib) = lib.get("io.MFEK.variable_width_stroke") {
         let mut vd: VecDeque<_> = lib.as_array().unwrap().clone().into();
         let mut vws_outline = Vec::new();
 
@@ -460,9 +465,9 @@ pub fn parse_vws_lib<T: glifparser::PointData>(input: &Glif<T>) -> Option<Vec<VW
     return None;
 }
 
-fn generate_vws_lib_impl(vwscontours: &Vec<VWSContour>, applied: bool) -> Option<plist::Dictionary> {
+fn generate_vws_lib_impl(vwscontours: &Vec<VWSContour>, applied: bool) -> GlifLib {
     if vwscontours.len() == 0 {
-        return None
+        return GlifLib::None
     }
 
     let mut lib_node = plist::Dictionary::new();
@@ -492,15 +497,15 @@ fn generate_vws_lib_impl(vwscontours: &Vec<VWSContour>, applied: bool) -> Option
         vws_vec.push(plist::Value::Dictionary(vws_contour_node));
     }
 
-    lib_node.insert("io.MFEK.variable_width_stroke".to_string(), plist::Value::Array(vws_vec));
+    lib_node.insert("org.MFEK.variable_width_stroke".to_string(), plist::Value::Array(vws_vec));
 
-    return Some(lib_node);
+    return GlifLib::Plist(lib_node);
 }
 
-pub fn generate_vws_lib(vwscontours: &Vec<VWSContour>) -> Option<plist::Dictionary> {
+pub fn generate_vws_lib(vwscontours: &Vec<VWSContour>) -> GlifLib {
     generate_vws_lib_impl(vwscontours, false)
 }
 
-pub fn generate_applied_vws_lib(vwscontours: &Vec<VWSContour>) -> Option<plist::Dictionary> {
+pub fn generate_applied_vws_lib(vwscontours: &Vec<VWSContour>) -> GlifLib {
     generate_vws_lib_impl(vwscontours, true)
 }

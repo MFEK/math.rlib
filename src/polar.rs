@@ -62,8 +62,8 @@ impl<PD: PointData> PolarCoordinates for Point<PD> {
     fn cartesian(&self, wh: WhichHandle) -> (f32, f32) {
         let (x, y) = match wh {
             Neither => (self.x, self.y),
-            A => self.handle_or_colocated(WhichHandle::A, |f|f, |f|f),
-            B => self.handle_or_colocated(WhichHandle::B, |f|f, |f|f),
+            A => self.handle_or_colocated(WhichHandle::A, &|f|f, &|f|f),
+            B => self.handle_or_colocated(WhichHandle::B, &|f|f, &|f|f),
         };
         (self.x - x, self.y - y)
     }
