@@ -21,16 +21,16 @@ impl Bezier {
         let h1 = Vector::from_handle(point, WhichHandle::A);
         let h2 = Vector::from_handle(next_point, WhichHandle::B);
 
-        return Self::from_points(p, h1, h2, np);
+        Self::from_points(p, h1, h2, np)
     }
 
     pub fn from_points(p0: Vector, p1: Vector, p2: Vector, p3: Vector) -> Self {
-        return Bezier {
+        Bezier {
             w1: p0,
             w2: p1,
             w3: p2,
             w4: p3,
-        };
+        }
     }
 
     pub fn to_control_points(&self) -> [Vector; 4] {
@@ -42,10 +42,10 @@ impl Bezier {
 
         let mut output = Vec::new();
         for p in &controlps {
-            output.push(p.clone());
+            output.push(*p);
         }
 
-        return output;
+        output
     }
 
     pub fn reverse(&self) -> Self {

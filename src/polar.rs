@@ -1,5 +1,4 @@
 /// This module adds math functions to types in glifparser.
-
 use glifparser::{Handle, Point, PointData, PointType, WhichHandle};
 
 use std::f32::consts;
@@ -22,14 +21,19 @@ impl Bezier {
         let (p, h) = match wh {
             WhichHandle::A => (self.w1, self.w2),
             WhichHandle::B => (self.w4, self.w3),
-            WhichHandle::Neither => unreachable!()
+            WhichHandle::Neither => unreachable!(),
         };
-        let mut gp: Point<()> = Vector::to_point(p, Handle::Colocated, Handle::Colocated, PointType::Line);
+        let mut gp: Point<()> =
+            Vector::to_point(p, Handle::Colocated, Handle::Colocated, PointType::Line);
         let gh: Handle = Vector::to_handle(h);
         match wh {
-            WhichHandle::A => {gp.a = gh;},
-            WhichHandle::B => {gp.b = gh;},
-            WhichHandle::Neither => unreachable!()
+            WhichHandle::A => {
+                gp.a = gh;
+            }
+            WhichHandle::B => {
+                gp.b = gh;
+            }
+            WhichHandle::Neither => unreachable!(),
         }
         gp
     }
@@ -50,20 +54,20 @@ impl PolarCoordinates for Bezier {
         let h = &mut match wh {
             WhichHandle::A => self.w2,
             WhichHandle::B => self.w3,
-            WhichHandle::Neither => unreachable!()
+            WhichHandle::Neither => unreachable!(),
         };
         h.x = p.x as f64;
         h.y = p.y as f64;
     }
 }
 
-use WhichHandle::{A, B, Neither};
+use WhichHandle::{Neither, A, B};
 impl<PD: PointData> PolarCoordinates for Point<PD> {
     fn cartesian(&self, wh: WhichHandle) -> (f32, f32) {
         let (x, y) = match wh {
             Neither => (self.x, self.y),
-            A => self.handle_or_colocated(WhichHandle::A, &|f|f, &|f|f),
-            B => self.handle_or_colocated(WhichHandle::B, &|f|f, &|f|f),
+            A => self.handle_or_colocated(WhichHandle::A, &|f| f, &|f| f),
+            B => self.handle_or_colocated(WhichHandle::B, &|f| f, &|f| f),
         };
         (self.x - x, self.y - y)
     }
@@ -78,9 +82,16 @@ impl<PD: PointData> PolarCoordinates for Point<PD> {
         let y = self.y + (r * (theta * (consts::PI / 180.)).sin());
 
         match wh {
-            Neither => {self.x = x; self.y = y;},
-            A => {self.a = Handle::At(x, y);},
-            B => {self.b = Handle::At(x, y);},
+            Neither => {
+                self.x = x;
+                self.y = y;
+            }
+            A => {
+                self.a = Handle::At(x, y);
+            }
+            B => {
+                self.b = Handle::At(x, y);
+            }
         };
     }
 }

@@ -9,7 +9,7 @@ use crate::{Bezier, EvalRotate, EvalScale, EvalTranslate, Evaluate, Piecewise, P
 
 #[allow(unused)]
 fn vec2_to_rad(vec: Vector) -> f64 {
-    return f64::atan2(vec.y, vec.x);
+    f64::atan2(vec.y, vec.x)
 }
 
 fn normalize_angle(angle: f64) -> f64 {
@@ -26,13 +26,11 @@ fn normalize_angle(angle: f64) -> f64 {
 
 #[allow(unused)]
 fn delta_angle(start: f64, end: f64, direction: f64) -> f64 {
-    let difference = if direction == 1. {
+    if direction == 1. {
         start - end
     } else {
         end - start
-    };
-
-    difference
+    }
 }
 
 pub struct GlyphBuilder {
@@ -41,9 +39,9 @@ pub struct GlyphBuilder {
 
 impl GlyphBuilder {
     pub fn new() -> Self {
-        return Self {
+        Self {
             beziers: Vec::new(),
-        };
+        }
     }
 
     pub fn append(&mut self, other: GlyphBuilder) {
@@ -72,7 +70,7 @@ impl GlyphBuilder {
     }
 
     pub fn bevel_to(&mut self, to: Vector, _tangent1: Vector, _tangent2: Vector) {
-        return self.line_to(to);
+        self.line_to(to)
     }
 
     pub fn miter_to(&mut self, to: Vector, tangent1: Vector, tangent2: Vector) {
@@ -322,7 +320,7 @@ impl GlyphBuilder {
         let ray1 = (from, from + tangent1 * 200.);
         let ray2 = (to, to + tangent2 * 200.);
 
-        return line_intersects_line(&ray1, &ray2);
+        line_intersects_line(&ray1, &ray2)
     }
 
     pub fn fuse_nearby_ends(&self, distance: f64) -> GlyphBuilder {
@@ -345,8 +343,8 @@ impl GlyphBuilder {
             new_segments.push(primitive.clone());
         }
 
-        return GlyphBuilder {
+        GlyphBuilder {
             beziers: new_segments,
-        };
+        }
     }
 }

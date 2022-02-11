@@ -22,9 +22,8 @@ pub fn get_curve_control_point(knots: Contour<()>) -> (Vec<(f32, f32)>, Vec<(f32
     } else {
         // Calculate first Bezier control points
         // Right hand side vector
-        let mut rhs = Vec::<f32>::new();
         // Set right hand side X values
-        rhs.push(knots[0].x + 2. * knots[1].x);
+        let mut rhs = vec![knots[0].x + 2. * knots[1].x];
         for i in 1..(n - 1) {
             rhs.push(4. * knots[i].x + 2. * knots[i + 1].x);
         }
