@@ -1,6 +1,6 @@
 /// Conversion boilerplate
-use std::ops::{Add, Mul, Div, Neg, Sub};
-use std::ops::{AddAssign, MulAssign, DivAssign, SubAssign};
+use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
 use std::ops::{Index, IndexMut};
 
 use super::Vector;
@@ -57,7 +57,7 @@ impl From<[f32; 2]> for Vector {
 
 impl std::cmp::PartialEq for Vector {
     fn eq(&self, other: &Vector) -> bool {
-        return self.x == other.x && self.y == other.y;
+        self.x == other.x && self.y == other.y
     }
 }
 
@@ -146,7 +146,7 @@ impl Index<usize> for Vector {
         match index {
             0 => &self.x,
             1 => &self.y,
-            _ => panic!("can only index Vector by 0 or 1")
+            _ => panic!("can only index Vector by 0 or 1"),
         }
     }
 }
@@ -156,7 +156,7 @@ impl IndexMut<usize> for Vector {
         match index {
             0 => &mut self.x,
             1 => &mut self.y,
-            _ => panic!("can only index Vector by 0 or 1")
+            _ => panic!("can only index Vector by 0 or 1"),
         }
     }
 }

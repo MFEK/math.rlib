@@ -74,7 +74,7 @@ impl Vector {
     }
 
     pub fn angle(self, v1: Vector) -> f64 {
-        return f64::atan2(v1.y, v1.x) - f64::atan2(self.y, self.x);
+        f64::atan2(v1.y, v1.x) - f64::atan2(self.y, self.x)
     }
 
     pub fn rotate(self, pivot: Vector, angle: f64) -> Vector {
@@ -87,7 +87,7 @@ impl Vector {
             y: translated_point.x * s + translated_point.y * c,
         };
 
-        return rotated_point + pivot;
+        rotated_point + pivot
     }
 }
 
