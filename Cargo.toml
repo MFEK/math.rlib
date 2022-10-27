@@ -19,7 +19,10 @@ log = "0.4"
 # Our modules
 glifparser = { git = "https://github.com/MFEK/glifparser.rlib", branch = "master", default-features = false }
 #glifparser = { path = "../glifparser.rlib" } # for development
+fontforge-typeconv = { git = "https://github.com/MFEK/fontforge-typeconv.rlib", branch = "main", default-features = false, optional = true }
+#fontforge-typeconv = { path = "../fontforge-typeconv.rlib", optional = true } # for development
 
 [features]
 default = ["skia-safe", "glifparser/skia", "glifparser/mfek"]
+fontforge = ["fontforge-typeconv"]
 strict = []
