@@ -1,4 +1,5 @@
 mod conv;
+#[cfg(feature = "skia")]
 mod skia;
 
 pub mod flo;
