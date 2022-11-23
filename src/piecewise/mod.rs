@@ -1,7 +1,7 @@
-pub mod glif;
-#[cfg(feature="default")]
-mod skia;
 mod evaluate;
+pub mod glif;
+#[cfg(feature = "skia")]
+mod skia;
 
 use crate::consts::SMALL_DISTANCE;
 

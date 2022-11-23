@@ -3,7 +3,7 @@ pub mod arclenparameterization;
 pub mod bezier;
 pub mod consts;
 pub mod coordinate;
-#[cfg(feature = "default")]
+#[cfg(feature = "skia")]
 pub mod dash_along_path;
 pub mod evaluate;
 pub mod fit_to_points;
@@ -11,17 +11,16 @@ pub(crate) mod fixup;
 pub mod glyphbuilder;
 pub mod interpolator;
 pub mod parameterization;
-#[cfg(feature = "default")]
+#[cfg(feature = "skia")]
 pub mod pattern_along_path;
 pub mod piecewise;
 pub mod polar;
 pub mod primitive;
 pub mod rect;
-#[cfg(feature = "default")]
 pub mod variable_width_stroking;
 pub mod vector;
 
-#[cfg(feature = "default")]
+#[cfg(feature = "skia")]
 pub use {
     self::{dash_along_path::*, pattern_along_path::*, variable_width_stroking::*},
     skia_safe,
