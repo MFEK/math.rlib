@@ -1,7 +1,9 @@
 use super::{ArcLengthParameterization, Bezier, Evaluate, EvalScale, EvalTranslate, Parameterization, Piecewise, Vector, Rect};
 use crate::vec2;
 
-use glifparser::{Glif, Outline, glif::{Lib, PAPContour, PatternCopies, PatternSubdivide, PatternStretch}};
+use glifparser::{Glif, Outline};
+use glifparser::glif::{Lib};
+use glifparser::glif::contour_operations::pap::{PAPContour, PatternCopies, PatternSubdivide, PatternStretch};
 use skia_safe::Path;
 
 // At some point soon I want to restructure this algorithm. The current two pass 

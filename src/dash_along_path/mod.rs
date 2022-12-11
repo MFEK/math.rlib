@@ -1,5 +1,6 @@
 use glifparser::PointData;
-use glifparser::glif::{DashContour, Glif};
+use glifparser::glif::contour_operations::dash::DashContour;
+use glifparser::glif::{Glif};
 use glifparser::outline::Outline;
 use glifparser::outline::skia::{FromSkiaPath as _, ToSkiaPath as _, ToSkiaPaths as _, SplitSkiaPath as _, ConicsToCubics as _, FromSkOutline as _};
 use glifparser::point::PointType;

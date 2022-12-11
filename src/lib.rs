@@ -19,6 +19,7 @@ pub mod primitive;
 pub mod rect;
 pub mod variable_width_stroking;
 pub mod vector;
+pub mod mfek;
 
 #[cfg(feature = "skia")]
 pub use {
