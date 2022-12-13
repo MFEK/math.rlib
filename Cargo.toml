@@ -1,13 +1,16 @@
 [package]
 name = "MFEKmath"
 version = "0.1.0"
-authors = ["Matthew Blanchard <matthewrblanchard@gmail.com>", "Fredrick R. Brennan <copypasteⒶkittens.ph>"]
+authors = ["Matthew Blanchard <matthewrblanchard@gmail.com>", "Fredrick R. Brennan <copypasteⒶkittens.ph>", "MFEK Authors"]
 edition = "2018"
+license = "Apache-2.0"
+# crates.io
+description = "A library which supplies mathematics and algorithms for manipulating beziers."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-skia-safe = { version = "*", optional = true }
+skia-safe = { version = ">0.0", optional = true }
 flo_curves = "0.6"
 kurbo = "0.8"
 #flo_curves = { path = "../flo_curves" } # for development
@@ -17,7 +20,7 @@ log = "0.4"
 #itertools = "0.10"
 
 # Our modules
-glifparser = { git = "https://github.com/MFEK/glifparser.rlib", branch = "master", default-features = false }
+glifparser = { version = "1.2.5-1", default-features = false }
 #glifparser = { path = "../glifparser.rlib" } # for development
 
 [features]
