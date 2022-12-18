@@ -1,7 +1,7 @@
 use crate::mfek::ResolveCubic;
 
 use super::{Bezier, Piecewise, Vector};
-use glifparser::{Contour, Outline, Handle, PointType, glif::{contour::{MFEKCubicContour, MFEKContourCommon}, MFEKContour}};
+use glifparser::{Contour, Outline, Handle, PointType, glif::{contour::{MFEKContourCommon}, MFEKContour}};
 #[cfg(feature="default")]
 use glifparser::glif::{MFEKOutline};
 
@@ -27,7 +27,7 @@ impl<T: glifparser::PointData> From<&MFEKOutline<T>> for Piecewise<Piecewise<Bez
 
         for contour in outline
         {
-            new_segs.push(Piecewise::from(contour.resolve_to_cubic()));
+            new_segs.push(Piecewise::from(contour.cubic().unwrap()));
         }
     
         return Piecewise::new(new_segs, None);
@@ -88,7 +88,7 @@ impl<T: glifparser::PointData> From<&Contour<T>> for Piecewise<Bezier>
 impl<T: glifparser::PointData> From<&MFEKContour<T>> for Piecewise<Bezier>
 {
     fn from(contour: &MFEKContour<T>) -> Self {
-        return Piecewise::from(contour.resolve_to_cubic().cubic().unwrap());
+        return Piecewise::from(contour.cubic().unwrap());
     }
 }
 
@@ -96,7 +96,7 @@ impl<T: glifparser::PointData> From<&MFEKContour<T>> for Piecewise<Bezier>
 impl<T: glifparser::PointData> From<MFEKContour<T>> for Piecewise<Bezier>
 {
     fn from(contour: MFEKContour<T>) -> Self {
-        return Piecewise::from(contour.resolve_to_cubic().cubic().unwrap());
+        return Piecewise::from(contour.cubic().unwrap());
     }
 }
 

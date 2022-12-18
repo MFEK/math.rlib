@@ -9,16 +9,17 @@ edition = "2018"
 [dependencies]
 skia-safe = { version = "*", optional = true }
 flo_curves = "0.6"
-kurbo = "0.8"
+kurbo = "0.9"
 #flo_curves = { path = "../flo_curves" } # for development
 xmltree = "0.10"
 plist = "1.3"
 log = "0.4"
 #itertools = "0.10"
+spline = {path="../spline"}
 
 # Our modules
-glifparser = { git = "https://github.com/MFEK/glifparser.rlib", branch = "master", default-features = false }
-#glifparser = { path = "../glifparser.rlib" } # for development
+#glifparser = { git = "https://github.com/MFEK/glifparser.rlib", branch = "master", default-features = false }
+glifparser = { path = "../glifparser.rlib" } # for development
 
 [features]
 default = ["glifparser/mfek"]
