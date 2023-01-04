@@ -1,5 +1,3 @@
-use crate::mfek::ResolveCubic;
-
 use super::{Bezier, Piecewise, Vector};
 use glifparser::{Contour, Outline, Handle, PointType, glif::{contour::{MFEKContourCommon}, MFEKContour}};
 #[cfg(feature="default")]
@@ -75,9 +73,10 @@ impl<T: glifparser::PointData> From<&Contour<T>> for Piecewise<Bezier>
             lastpoint = Some(point);
         }
 
-        let firstpoint = contour.first().unwrap();
-        if firstpoint.ptype != PointType::Move {
-            new_segs.push(Bezier::from(&lastpoint.unwrap(), firstpoint));
+        if let Some(firstpoint) = contour.first() {
+            if firstpoint.ptype != PointType::Move {
+                new_segs.push(Bezier::from(&lastpoint.unwrap(), firstpoint));
+            }
         }
 
         return Piecewise::new(new_segs, None);
