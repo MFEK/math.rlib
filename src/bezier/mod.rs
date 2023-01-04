@@ -4,7 +4,7 @@ use glifparser::{Point as GPPoint, PointData as GPPointData, WhichHandle};
 mod evaluate;
 mod flo;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 #[allow(non_snake_case)]
 pub struct Bezier {
     pub w1: Vector,

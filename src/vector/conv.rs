@@ -55,6 +55,18 @@ impl From<[f32; 2]> for Vector {
     }
 }
 
+impl From<f64> for Vector {
+    fn from(f: f64) -> Vector {
+        Vector::from_components(f, f)
+    }
+}
+
+impl From<f32> for Vector {
+    fn from(f: f32) -> Vector {
+        (f as f64).into()
+    }
+}
+
 impl std::cmp::PartialEq for Vector {
     fn eq(&self, other: &Vector) -> bool {
         return self.x == other.x && self.y == other.y;
@@ -104,6 +116,15 @@ impl Mul<f64> for Vector {
     type Output = Vector;
     fn mul(self, s: f64) -> Vector {
         Vector::from_components(self.x * s, self.y * s)
+    }
+}
+
+/// TODO: Define these for everything else.
+impl Mul<Vector> for f64 {
+    type Output = Vector;
+
+    fn mul(self, other: Vector) -> Self::Output {
+        Vector::from_components(self * other.x, self * other.y)
     }
 }
 

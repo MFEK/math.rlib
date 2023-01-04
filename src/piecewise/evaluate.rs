@@ -7,8 +7,7 @@ impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
     type EvalResult = T::EvalResult;
 
     // return the x, y of our curve at time t
-    fn at(&self, t: f64) -> Self::EvalResult
-    {
+    fn at(&self, t: f64) -> Self::EvalResult {
         /*
         // there needs to be better handling than this probably through a fail/success
         if self.segs.len() == 0 {panic!("Can't evaluate an empty piecewise!")}
@@ -25,12 +24,11 @@ impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
 
         let ref dir = self.segs[curve_index];
 
-        return dir.at(offset_time);  
+        return dir.at(offset_time);
     }
 
     // returns the derivative at time t
-    fn tangent_at(&self, t: f64) -> Self::EvalResult
-    {
+    fn tangent_at(&self, t: f64) -> Self::EvalResult {
         /*
         // there needs to be better handling than this probably through a fail/success
         if self.segs.len() == 0 {panic!("Can't find derivative for an empty piecewise!")}
@@ -47,12 +45,14 @@ impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
 
         let ref dir = self.segs[curve_index];
 
-        return dir.tangent_at(offset_time);  
+        return dir.tangent_at(offset_time);
     }
 
     fn bounds(&self) -> Rect {
         // again maybe success/failure? These are mainly here to catch bugs right now.
-        if self.segs.len() == 0 {panic!("An empty piecewise knows no bounds!")}
+        if self.segs.len() == 0 {
+            panic!("An empty piecewise knows no bounds!")
+        }
 
         let mut output = Rect {
             left: f64::INFINITY,
@@ -68,18 +68,20 @@ impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
         return output;
     }
 
-    fn apply_transform<F: Send+Sync>(&self, transform: F) -> Self where F: Fn(&Self::EvalResult) -> Self::EvalResult
+    fn apply_transform<F: Send + Sync>(&self, transform: F) -> Self
+    where
+        F: Fn(&Self::EvalResult) -> Self::EvalResult,
     {
-        let output = self.segs.iter().map(|contour| {
-            contour.apply_transform(&transform)
-        }).collect();
+        let output = self
+            .segs
+            .iter()
+            .map(|contour| contour.apply_transform(&transform))
+            .collect();
 
-        return Piecewise::new(output, Some(self.cuts.clone()))
+        return Piecewise::new(output, Some(self.cuts.clone()));
     }
 
-    
-    fn start_point(&self) -> Self::EvalResult
-    {
+    fn start_point(&self) -> Self::EvalResult {
         if let Some(path_fcurve) = self.segs.first() {
             return path_fcurve.start_point();
         }
@@ -88,8 +90,7 @@ impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
         panic!("Empty piecewise has no start point.")
     }
 
-    fn end_point(&self) -> Self::EvalResult
-    {
+    fn end_point(&self) -> Self::EvalResult {
         if let Some(path_lcurve) = self.segs.last() {
             return path_lcurve.end_point();
         }
@@ -97,5 +98,42 @@ impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
         // TODO: Add proper error handling to these functions.
         panic!("Empty piecewise has no start point.")
     }
+}
 
+impl Piecewise<crate::Bezier> {
+    pub fn curvature_at(&self, t: f64) -> f64 {
+        let curve_index = self.seg_n(t);
+        let offset_time = self.seg_t(t);
+
+        let ref curve = self.segs[curve_index];
+
+        let (x_derivative, y_derivative): (f64, f64) = curve.tangent_at(offset_time).into();
+        let (x_second_derivative, y_second_derivative) =
+            curve.second_derivative_at(offset_time).into();
+
+        let curvature = (x_derivative * y_second_derivative - y_derivative * x_second_derivative)
+            / ((x_derivative.powi(2) + y_derivative.powi(2)).powf(1.5));
+
+        return curvature;
+    }
+
+    pub fn scaled_curvature_at(&self, t: f64) -> f64 {
+        2.0 * (self.curvature_at(t) - self.min_curvature())
+            / (self.max_curvature() - self.min_curvature())
+            - 1.0
+    }
+
+    pub fn min_curvature(&self) -> f64 {
+        self.segs
+            .iter()
+            .map(|c| c.min_curvature())
+            .fold(0.0, f64::min)
+    }
+
+    pub fn max_curvature(&self) -> f64 {
+        self.segs
+            .iter()
+            .map(|c| c.max_curvature())
+            .fold(0.0, f64::max)
+    }
 }

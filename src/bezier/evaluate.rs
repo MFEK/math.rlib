@@ -68,3 +68,46 @@ impl Evaluate for Bezier {
     }
 
 }
+
+impl Bezier {
+    /// Returns the second derivative of the Bezier curve at time `t`.
+    ///
+    /// The second derivative of a curve at a particular point is a measure of how the curve is
+    /// changing at that point. It is the derivative of the derivative of the curve. A positive
+    /// second derivative indicates that the curve is concave up (curving upwards) at that point,
+    /// while a negative second derivative indicates that the curve is concave down (curving
+    /// downwards) at that point.
+    pub fn second_derivative_at(&self, t: f64) -> (f64, f64) {
+        let tan = self.tangent_at(t);
+        let (x_derivative, y_derivative) = (tan.x, tan.y);
+
+        macro_rules! second_derivative {
+            ($t:expr, $first_derivative:expr, $control_point:expr, $end_point:expr) => {
+                $first_derivative * 3.0 * (1.0 - $t) * (1.0 - $t) +
+                    6.0 * (1.0 - $t) * $t * $control_point +
+                    3.0 * $t * $t * $end_point
+            }
+        }
+
+        let x_second_derivative = second_derivative!(t, x_derivative, self.w2.x, self.w3.x);
+        let y_second_derivative = second_derivative!(t, y_derivative, self.w2.y, self.w3.y);
+
+        return (x_second_derivative, y_second_derivative);
+    }
+
+}
+
+impl Bezier {
+    pub fn min_curvature(&self) -> f64 {
+        let numerator = 3.0 * self.w2.x - self.w1.x;
+        let denominator = 6.0 * self.w2.x - 2.0 * self.w1.x - 3.0 * self.w3.x;
+        return numerator / denominator;
+    }
+
+    pub fn max_curvature(&self) -> f64 {
+        let numerator = 3.0 * self.w3.x - self.w4.x;
+        let denominator = 3.0 * self.w3.x - self.w4.x + 2.0 * self.w2.x - self.w1.x;
+        return numerator / denominator;
+    }
+}
+

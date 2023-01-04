@@ -8,6 +8,7 @@ version = "0.1.1"
 dependencies = [
  "flo_curves",
  "glifparser",
+ "itertools",
  "kurbo 0.8.3",
  "log",
  "plist",
@@ -242,9 +243,7 @@ dependencies = [
 
 [[package]]
 name = "glifparser"
-version = "1.2.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4d01cb960fd260b0eaf3528a74fd8571288d24799d961dabaaf09f14e5773c51"
+version = "1.2.9"
 dependencies = [
  "derivative",
  "derive_more",
@@ -321,9 +320,9 @@ checksum = "da2d6f23ffea9d7e76c53eee25dfb67bcd8fde7f1198b0855350698c9f07c780"
 
 [[package]]
 name = "integer_or_float"
-version = "0.1.5-1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4c938d51818e629bbddf8c62cbdab9d83d91f80a33ea9b9edb92214af4c73dc"
+checksum = "131a6cd5287d9e0851053650c097d8acea3136a557df396f90cdd40cae3fe79f"
 dependencies = [
  "autocfg",
  "cargo-emit",
@@ -331,6 +330,7 @@ dependencies = [
  "derive_more",
  "float-cmp",
  "indoc",
+ "num-traits",
  "serde",
 ]
 

@@ -7,7 +7,7 @@ pub mod glif;
 
 use super::coordinate::Coordinate;
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Default)]
 pub struct Vector {
     pub x: f64,
     pub y: f64,
@@ -89,6 +89,35 @@ impl Vector {
         };
 
         return rotated_point + pivot;
+    }
+
+    pub fn cross(&self, other: &Self) -> Self {
+        return Self { x: self.x * other.y - self.y * other.x, y: self.y * other.x - self.x * other.y }
+    }
+    
+    pub fn powf(&self, power: f64) -> Self {
+        return Self { x: self.x.powf(power), y: self.y.powf(power) }
+    }
+
+    pub fn abs(&self) -> Self {
+        return Self { x: self.x.abs(), y: self.y.abs() }
+    }
+}
+
+use std::cmp::Ordering;
+
+impl PartialOrd for Vector {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        let self_length = (self.x * self.x + self.y * self.y).sqrt();
+        let other_length = (other.x * other.x + other.y * other.y).sqrt();
+
+        if self_length < other_length {
+            Some(Ordering::Less)
+        } else if self_length > other_length {
+            Some(Ordering::Greater)
+        } else {
+            Some(Ordering::Equal)
+        }
     }
 }
 

@@ -20,8 +20,9 @@ log = "0.4"
 #itertools = "0.10"
 
 # Our modules
-glifparser = { version = "1.2", default-features = false }
-#glifparser = { path = "../glifparser.rlib" } # for development
+#glifparser = { version = "1.2", default-features = false }
+glifparser = { path = "../glifparser.rlib" } # for development
+itertools = "0.10.5"
 
 [features]
 default = ["glifparser/mfek"]
