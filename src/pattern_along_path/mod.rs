@@ -147,6 +147,9 @@ fn prepare_pattern(pattern: &Piecewise<Piecewise<Bezier>>, arclenparam: &ArcLeng
 #[allow(non_snake_case)]
 fn pattern_along_path(path: &Piecewise<Bezier>, pattern: &Piecewise<Piecewise<Bezier>>, settings: &PatternSettings) -> Piecewise<Piecewise<Bezier>>
 {
+    if pattern.segs.len() == 0 || settings.pattern_scale.x == 0. || settings.pattern_scale.y == 0. {
+        return Piecewise::new(vec![], None);
+    }
     // we're gonna parameterize the input path such that 0-1 = 0 -> totalArcLength
     // this is important because samples will be spaced equidistant along the input path
     let arclenparam = ArcLengthParameterization::from(path, 1000);
