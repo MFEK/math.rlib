@@ -18,9 +18,10 @@ xmltree = "0.10"
 plist = "1.3"
 log = "0.4"
 #itertools = "0.10"
-spline = {path="../spline"}
+spline = { git = "https://github.com/MFEK/spline.rlib", features = ["serde"] }
 
 # Our modules
+#glifparser = { path = "../glifparser.rlib" }
 glifparser = { git = "https://github.com/MFEK/glifparser.rlib", features = ["glifserde"], branch = "v2", default-features = false }
 
 [features]

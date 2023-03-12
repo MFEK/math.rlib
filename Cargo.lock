@@ -743,8 +743,10 @@ checksum = "4c845fbdc07cb9555a94806496be14d51dcda6d3bf6894d92af2c3a93bebc2c5"
 [[package]]
 name = "spline"
 version = "0.3.0"
+source = "git+https://github.com/MFEK/spline.rlib#46d9121b03d2e6bea67b33078057ecad28666d07"
 dependencies = [
  "kurbo",
+ "serde",
 ]
 
 [[package]]
