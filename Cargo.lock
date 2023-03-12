@@ -250,7 +250,7 @@ dependencies = [
 [[package]]
 name = "glifparser"
 version = "1.2.8"
-source = "git+https://github.com/MFEK/glifparser.rlib?branch=v2#e2e600d31e2100167c328ce6d3b986e820e07694"
+source = "git+https://github.com/MFEK/glifparser.rlib?branch=master#331bac41e7ee9b4e26ecfcd36107d58436ef0539"
 dependencies = [
  "derivative",
  "derive_more",
@@ -329,9 +329,9 @@ checksum = "bfa799dd5ed20a7e349f3b4639aa80d74549c81716d9ec4f994c9b5815598306"
 
 [[package]]
 name = "integer_or_float"
-version = "0.1.5-1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e4c938d51818e629bbddf8c62cbdab9d83d91f80a33ea9b9edb92214af4c73dc"
+checksum = "edf9d3b9fde0fc18066e6ba434e0b05863f7e7cccdecdae0f8d68c34089f5056"
 dependencies = [
  "autocfg",
  "cargo-emit",
@@ -339,6 +339,7 @@ dependencies = [
  "derive_more",
  "float-cmp",
  "indoc",
+ "ryu",
  "serde",
 ]
 
