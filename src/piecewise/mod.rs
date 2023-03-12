@@ -105,7 +105,7 @@ impl Piecewise<Bezier> {
         let mut iter = self.segs.iter().peekable();
         let mut new_segments = Vec::new();
         while let Some(primitive) = iter.next() {
-            for next_primitive in iter.peek() {
+            while let Some(next_primitive) = iter.peek() {
                 if primitive.end_point().distance(next_primitive.start_point()) <= distance {
                     let mut new_primitive = primitive.to_control_points();
                     new_primitive[3] = next_primitive.start_point();

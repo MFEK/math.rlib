@@ -1,6 +1,7 @@
 /// This module adds math functions to types in glifparser.
 
 use glifparser::{Handle, Point, PointData, PointType, WhichHandle};
+use glifparser::glif::mfek::point::MFEKPointCommon;
 
 use std::f32::consts;
 
@@ -81,6 +82,33 @@ impl<PD: PointData> PolarCoordinates for Point<PD> {
             Neither => {self.x = x; self.y = y;},
             A => {self.a = Handle::At(x, y);},
             B => {self.b = Handle::At(x, y);},
+        };
+    }
+}
+
+impl<PD: PointData> PolarCoordinates for dyn MFEKPointCommon<PD> {
+    fn cartesian(&self, wh: WhichHandle) -> (f32, f32) {
+        let (x, y) = match wh {
+            Neither => (self.x(), self.y()),
+            A => self.get_handle_position(WhichHandle::A).unwrap(),
+            B => self.get_handle_position(WhichHandle::B).unwrap(),
+        };
+        (self.x() - x, self.y() - y)
+    }
+    fn polar(&self, wh: WhichHandle) -> (f32, f32) {
+        let (x, y) = self.cartesian(wh);
+        let r = (x.powf(2.) + y.powf(2.)).sqrt();
+        let theta = y.atan2(x);
+        (r, theta)
+    }
+    fn set_polar(&mut self, wh: WhichHandle, (r, theta): (f32, f32)) {
+        let x = self.x() + (r * (theta * (consts::PI / 180.)).cos());
+        let y = self.y() + (r * (theta * (consts::PI / 180.)).sin());
+
+        match wh {
+            Neither => {self.set_position(x, y)},
+            A => {self.set_handle(WhichHandle::A, Handle::At(x, y))},
+            B => {self.set_handle(WhichHandle::B, Handle::At(x, y))},
         };
     }
 }

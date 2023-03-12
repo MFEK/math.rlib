@@ -2,7 +2,8 @@ use std::collections::VecDeque;
 
 use super::{Bezier, Evaluate, Piecewise, Vector, GlyphBuilder};
 use super::consts::SMALL_DISTANCE;
-use glifparser::{Glif, JoinType, Outline, PointData, VWSContour, glif::{CapType, InterpolationType, VWSHandle}};
+use glifparser::{Glif, JoinType, Outline, PointData};
+use glifparser::glif::contour_operations::vws::{VWSContour, CapType, InterpolationType, VWSHandle};
 use glifparser::glif::Lib as GlifLib;
 
 #[derive(Debug)]
