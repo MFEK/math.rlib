@@ -1,6 +1,6 @@
 [package]
 name = "MFEKmath"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Matthew Blanchard <matthewrblanchard@gmail.com>", "Fredrick R. Brennan <copypasteⒶkittens.ph>", "MFEK Authors"]
 edition = "2018"
 license = "Apache-2.0"
