@@ -317,7 +317,6 @@ pub fn variable_width_stroke_glif<PD: glifparser::PointData>(path: &Glif<PD>, se
     
     return Glif {
         outline: Some(output_outline),
-        order: path.order, // default when only corners
         anchors: path.anchors.clone(),
         width: path.width,
         unicode: path.unicode.clone(),

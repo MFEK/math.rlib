@@ -360,7 +360,6 @@ pub fn pattern_along_glif<U: glifparser::PointData>(path: &Glif<U>, pattern: &Gl
 
     return Glif {
         outline: Some(output_outline), 
-        order: path.order, // default when only corners
         anchors: path.anchors.clone(),
         width: path.width,
         unicode: path.unicode.clone(),
