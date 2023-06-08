@@ -20,7 +20,7 @@ pub trait ResolveCubic<PD: PointData> {
     fn resolve(&self) -> (Vec<usize>, MFEKContour<PD>);
     fn to_cubic(&self) -> MFEKContour<PD>;
 
-    // Mao an index from the original contour to the resolved cubic
+    // Map an index from the original contour to the resolved cubic
     fn get_index_map(&self) -> Vec<usize>;
 }
 
@@ -122,7 +122,6 @@ impl<PD: PointData> ResolveCubic<PD> for MFEKContour<PD> {
                     final_path.move_to(kurbo::Point::new(spline.segments()[0].p0.x, spline.segments()[0].p0.y));
 
                     let mut last_handle = None;
-                    println!("{:?}", spline.segments().iter().count());
                     for (idx, seg) in spline.segments().iter().enumerate() {
                         let mut bez_path = kurbo::BezPath::new();
                         seg.render(&mut bez_path);
