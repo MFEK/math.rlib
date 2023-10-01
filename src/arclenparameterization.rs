@@ -13,7 +13,7 @@ pub struct ArcLengthParameterization
 impl ArcLengthParameterization
 {
     /// An evaluable and an accuracy value which defines how many lines we use to measure length.
-    pub fn from<T: Evaluate>(evaluable: &T, accuracy: i32) -> Self
+    pub fn from<T: Evaluate>(evaluable: &T, iterations: i32) -> Self
     {
         let mut output = Vec::new();
 
@@ -22,9 +22,9 @@ impl ArcLengthParameterization
         output.push(sum);
         
         let mut i = 1;
-        while i < accuracy + 1
+        while i < iterations + 1
         {
-            let t = i as f64 / accuracy as f64;
+            let t = i as f64 / iterations as f64;
             let point = evaluable.at(t);
             let dist = point.distance(prev_point);
             sum = sum + dist;

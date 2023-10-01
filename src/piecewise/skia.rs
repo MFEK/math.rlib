@@ -1,7 +1,7 @@
 use super::super::vector::Vector;
 use super::super::bezier::Bezier;
 use super::super::piecewise::Piecewise;
-use skia_safe::{path, Path};
+use skia_safe::{path, Path, Point};
 
 impl Piecewise<Piecewise<Bezier>>
 {
@@ -91,7 +91,7 @@ impl From<&Path> for Piecewise<Piecewise<Bezier>>
                     contours.push(Piecewise::new(cur_contour.clone(), None));
                     cur_contour = Vec::new();
                 }
-                
+            
     
                 // I might have to implement more verbs, but at the moment we're just converting
                 // from glifparser output and these are all the supported primitives there.

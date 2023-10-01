@@ -265,8 +265,7 @@ dependencies = [
 
 [[package]]
 name = "glifparser"
-version = "2.0.0"
-source = "git+https://github.com/MFEK/glifparser.rlib?branch=master#1b683422ad8041e5f67f724629bb9f563e18275e"
+version = "2.0.1"
 dependencies = [
  "derivative",
  "derive_more",
@@ -385,9 +384,9 @@ dependencies = [
 
 [[package]]
 name = "kurbo"
-version = "0.9.4"
+version = "0.9.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d676038719d1c892f91e6e85121550143c75880b42f7feff6d413a078cf91fb3"
+checksum = "e119590a03caff1f7a582e8ee8c2164ddcc975791701188132fd1d1b518d3871"
 dependencies = [
  "arrayvec",
  "serde",

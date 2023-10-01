@@ -21,8 +21,8 @@ log = "0.4"
 spline = { git = "https://github.com/MFEK/spline.rlib", features = ["serde"] }
 
 # Our modules
-#glifparser = { path = "../glifparser.rlib" }
-glifparser = { git = "https://github.com/MFEK/glifparser.rlib", features = ["glifserde"], branch = "master", default-features = false }
+glifparser = { path = "../glifparser.rlib" }
+#glifparser = { git = "https://github.com/MFEK/glifparser.rlib", features = ["glifserde"], branch = "master", default-features = false }
 
 [features]
 default = ["glifparser/mfek"]

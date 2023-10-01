@@ -10,21 +10,20 @@ use crate::vec2;
 // Could probably use a better name. Maybe Primitive as they're the building blocks of our glyph.
 pub trait Evaluate
 {
-    type EvalResult: Coordinate+Send+Sync;
-    fn at(&self, t: f64) -> Self::EvalResult; 
-    fn tangent_at(&self, u: f64) -> Self::EvalResult;
+    fn at(&self, t: f64) -> Vector; 
+    fn tangent_at(&self, u: f64) -> Vector;
     fn bounds(&self) -> Rect; // returns an AABB that contains all points 
-    fn apply_transform<F: Send+Sync>(&self, transform: F) -> Self where F: Fn(&Self::EvalResult) -> Self::EvalResult;
-    fn start_point(&self) -> Self::EvalResult;
-    fn end_point(&self) -> Self::EvalResult;
+    fn apply_transform<F: Send+Sync>(&self, transform: F) -> Self where F: Fn(&Vector) -> Vector;
+    fn start_point(&self) -> Vector;
+    fn end_point(&self) -> Vector;
 }
 
 pub trait EvalTranslate: Evaluate {
-    fn translate(&self, t: Self::EvalResult) -> Self;
+    fn translate(&self, t: Vector) -> Self;
 }
 
 pub trait EvalScale: Evaluate {
-    fn scale(&self, s: Self::EvalResult) -> Self;
+    fn scale(&self, s: Vector) -> Self;
 }
 
 pub trait EvalRotate: Evaluate {
@@ -32,9 +31,9 @@ pub trait EvalRotate: Evaluate {
 }
 
 impl<T: Evaluate+Send+Sync> EvalTranslate for T{
-    fn translate(&self, t: T::EvalResult) -> Self
+    fn translate(&self, t: Vector) -> Self
     {
-        let transform = |v: &T::EvalResult| {
+        let transform = |v: &Vector| {
             return *v + t;
         };
     
@@ -43,10 +42,10 @@ impl<T: Evaluate+Send+Sync> EvalTranslate for T{
 }
 
 impl<T: Evaluate> EvalScale for T{
-    fn scale(&self, s: T::EvalResult) -> Self
+    fn scale(&self, s: Vector) -> Self
     {
     
-        let transform = |v: &T::EvalResult| {
+        let transform = |v: &Vector| {
             return *v * s;
         };
 
@@ -54,11 +53,11 @@ impl<T: Evaluate> EvalScale for T{
     }
 }
 
-impl<T: Evaluate<EvalResult = Vector>> EvalRotate for T {
+impl<T: Evaluate> EvalRotate for T {
 
     fn rotate(&self, angle: f64) -> Self 
     {
-        let transform = |v: &T::EvalResult| {
+        let transform = |v: &Vector| {
             return vec2!(
                 v.x * f64::cos(angle) - v.y * f64::sin(angle),
                 v.x * f64::sin(angle) + v.y * f64::cos(angle)

@@ -86,7 +86,7 @@ impl<T: Evaluate> Piecewise<T> {
 }
 
 // TODO: Move these functions to a more appropriate submodule.
-impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+ Sync> Piecewise<Piecewise<T>>
+impl<T: Evaluate+Primitive+Send+ Sync> Piecewise<Piecewise<T>>
 {
     // we split the primitive that contains t at t
     pub fn subdivide(&self, t: f64) -> Self
@@ -97,6 +97,20 @@ impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+ Sync> Piecewise<Piecewise<
         }
 
         return Piecewise::new(output, Some(self.cuts.clone()));
+    }
+}
+
+impl Piecewise<Bezier> {
+    pub fn balance(&self) -> Self {
+        let new_segments = self.segs.iter().map(|bezier| bezier.balance()).collect();
+        Piecewise::new(new_segments, None)
+    }
+}
+
+impl Piecewise<Piecewise<Bezier>> {
+    pub fn balance(&self) -> Self {
+        let new_segments = self.segs.iter().map(|piecewise| piecewise.balance()).collect();
+        Piecewise::new(new_segments, None)
     }
 }
 
@@ -134,6 +148,48 @@ impl Piecewise<Bezier> {
         return Piecewise::new(new_segs, None);
     }
 
+    pub fn split_at_tangent_discontinuities(&self, angle: f64) -> Piecewise<Piecewise<Bezier>> {
+        let mut output_pws: Vec<Piecewise<Bezier>> = Vec::new();
+        let mut current_run: Vec<Bezier> = Vec::new();
+        let mut last_tangent: Option<Vector> = None;
+
+        for bez in &self.segs {
+            let start_tangent = bez.tangent_at(0.0);
+
+            // Compare this tangent to the last one
+            if let Some(lt) = last_tangent {
+                let dot_product = lt.dot(start_tangent);
+                let cos_angle = dot_product / (lt.magnitude() * start_tangent.magnitude()); // Make sure to normalize
+                let current_angle = cos_angle.acos(); // in radians
+
+                if current_angle > angle {
+                    // A discontinuity is detected
+                    let output = Piecewise::new(current_run.clone(), None);
+                    output_pws.push(output);
+
+                    current_run = Vec::new();
+                    current_run.push(bez.clone());
+                } else {
+                    current_run.push(bez.clone());
+                }
+            }
+            else {
+                current_run.push(bez.clone());
+            }
+
+            last_tangent = Some(bez.tangent_at(1.0));
+        }
+
+        // Handle any remaining Bezier curves
+        if !current_run.is_empty() {
+            let output = Piecewise::new(current_run, None);
+            output_pws.push(output);
+        }
+
+        return Piecewise::new(output_pws, None);
+    }
+
+
     pub fn split_at_discontinuities(&self, distance: f64) -> Piecewise<Piecewise<Bezier>> {
         let mut output_pws: Vec<Piecewise<Bezier>> = Vec::new();
         let mut current_run: Vec<Bezier> = Vec::new();
@@ -165,9 +221,50 @@ impl Piecewise<Bezier> {
         return Piecewise::new(output_pws, None);
     }
 
+
+    /// Calculate the approximate area by treating each Bezier curve as a line segment
+    pub fn approximate_area(&self) -> f64 {
+        let mut area = 0.0;
+        let mut prev_point: Option<Vector> = None;
+        let mut first_point: Option<Vector> = None;
+
+        for bez in &self.segs {
+            let start = bez.start_point();
+            let end = bez.end_point();
+
+            // Initialize first_point with the start point of the first segment
+            if first_point.is_none() {
+                first_point = Some(start);
+            }
+
+            // Initialize prev_point with the start point of the first segment
+            if prev_point.is_none() {
+                prev_point = Some(start);
+            }
+
+            if let Some(prev) = prev_point {
+                // Using the Shoelace formula for calculating the area of polygons
+                area += (prev.x * end.y) - (end.x * prev.y);
+            }
+
+            prev_point = Some(end);
+        }
+
+        // Close the shape by connecting the last point to the first, 
+        // but only if there is more than one segment
+        if let Some(first) = first_point {
+            if self.segs.len() > 1 {
+                if let Some(last) = prev_point {
+                    area += (last.x * first.y) - (first.x * last.y);
+                }
+            }
+        }
+
+        (area / 2.0).abs()
+    }
 }
 
-impl<T: Evaluate<EvalResult = Vector>+Primitive+Send+Sync> Piecewise<T>
+impl<T: Evaluate+Primitive+Send+Sync> Piecewise<T>
 {    
 
     pub fn is_closed(&self) -> bool

@@ -1,13 +1,12 @@
 use crate::evaluate::Evaluate;
+use crate::vector::Vector;
 use crate::piecewise::Piecewise;
 use crate::rect::Rect;
 
 // Implements the evaluate trait for Piecewise
 impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
-    type EvalResult = T::EvalResult;
-
     // return the x, y of our curve at time t
-    fn at(&self, t: f64) -> Self::EvalResult
+    fn at(&self, t: f64) -> Vector
     {
         /*
         // there needs to be better handling than this probably through a fail/success
@@ -29,7 +28,7 @@ impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
     }
 
     // returns the derivative at time t
-    fn tangent_at(&self, t: f64) -> Self::EvalResult
+    fn tangent_at(&self, t: f64) -> Vector
     {
         /*
         // there needs to be better handling than this probably through a fail/success
@@ -68,7 +67,7 @@ impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
         return output;
     }
 
-    fn apply_transform<F: Send+Sync>(&self, transform: F) -> Self where F: Fn(&Self::EvalResult) -> Self::EvalResult
+    fn apply_transform<F: Send+Sync>(&self, transform: F) -> Self where F: Fn(&Vector) -> Vector
     {
         let output = self.segs.iter().map(|contour| {
             contour.apply_transform(&transform)
@@ -78,7 +77,7 @@ impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
     }
 
     
-    fn start_point(&self) -> Self::EvalResult
+    fn start_point(&self) -> Vector
     {
         if let Some(path_fcurve) = self.segs.first() {
             return path_fcurve.start_point();
@@ -88,7 +87,7 @@ impl<T: Evaluate + Send + Sync> Evaluate for Piecewise<T> {
         panic!("Empty piecewise has no start point.")
     }
 
-    fn end_point(&self) -> Self::EvalResult
+    fn end_point(&self) -> Vector
     {
         if let Some(path_lcurve) = self.segs.last() {
             return path_lcurve.end_point();
