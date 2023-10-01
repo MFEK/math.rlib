@@ -7,6 +7,8 @@ pub mod coordinate;
 pub mod dash_along_path;
 pub mod evaluate;
 pub mod fit_to_points;
+#[cfg(feature = "fontforge")]
+pub mod nib_stroking;
 pub(crate) mod fixup;
 pub mod glyphbuilder;
 pub mod parameterization;

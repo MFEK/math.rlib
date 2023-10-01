@@ -21,10 +21,13 @@ log = "0.4"
 spline = { git = "https://github.com/MFEK/spline.rlib", features = ["serde"] }
 
 # Our modules
-glifparser = { path = "../glifparser.rlib" }
-#glifparser = { git = "https://github.com/MFEK/glifparser.rlib", features = ["glifserde"], branch = "master", default-features = false }
+glifparser = { git = "https://github.com/MFEK/glifparser.rlib", features = ["glifserde"], branch = "master", default-features = false }
+#glifparser = { path = "../glifparser.rlib" } # for development
+fontforge-typeconv = { git = "https://github.com/MFEK/fontforge-typeconv.rlib", branch = "main", default-features = false, optional = true }
+#fontforge-typeconv = { path = "../fontforge-typeconv.rlib", optional = true } # for development
 
 [features]
-default = ["glifparser/mfek"]
+default = ["skia-safe", "glifparser/skia", "glifparser/mfek"]
+fontforge = ["fontforge-typeconv"]
 strict = []
 skia = ["skia-safe", "glifparser/skia"]
