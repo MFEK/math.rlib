@@ -12,7 +12,7 @@ description = "A library which supplies mathematics and algorithms for manipulat
 [dependencies]
 skia-safe = { version = ">0.0", optional = true }
 flo_curves = "0.6"
-kurbo = "0.9"
+kurbo = { git = "https://github.com/MFEK/kurbo.rlib", branch = "master" }
 #flo_curves = { path = "../flo_curves" } # for development
 xmltree = "0.10"
 plist = "1.3"
