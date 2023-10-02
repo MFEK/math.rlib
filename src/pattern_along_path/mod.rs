@@ -156,6 +156,7 @@ fn pattern_along_path(path: &Piecewise<Bezier>, pattern: &Piecewise<Piecewise<Be
     if pattern.segs.len() == 0 || settings.pattern_scale.x == 0. || settings.pattern_scale.y == 0. {
         return Piecewise::new(vec![], None);
     }
+
     // we're gonna parameterize the input path such that 0-1 = 0 -> totalArcLength
     // this is important because samples will be spaced equidistant along the input path
     let arclenparam = ArcLengthParameterization::from(path, 1000);
@@ -357,6 +358,7 @@ fn pattern_along_path(path: &Piecewise<Bezier>, pattern: &Piecewise<Piecewise<Be
                     // We convert our pattern to a skia path
                     let skpattern = closed;
 
+                    let mut local_output_segments = vec![];
                     // Then we get the difference between the cull cache and the pattern
                     let difference = skpattern.op(&cull_cache, skia_safe::PathOp::Difference);
                     if let Some(difference) = difference {
@@ -367,11 +369,16 @@ fn pattern_along_path(path: &Piecewise<Bezier>, pattern: &Piecewise<Piecewise<Be
                             let area = contour.approximate_area().abs();
 
                             if area > cull_area_percent / 100. * pattern_area {
-                                output_segments.push(contour.to_contour::<MFEKPointData>());
+                                local_output_segments.push(contour.to_contour::<MFEKPointData>());
                             }
                         }
                     }
                     
+                    for contour in local_output_segments {
+                        output_segments.push(contour);
+                    }
+
+                    let skpattern = local_output_segments.to_skia_paths(None);
                     // After culling the pattern we need to add it to the cull cache
                     // Create a Paint object to configure the stroke
                     let mut paint = Paint::new(Color4f::new(0.0, 0.0, 0.0, 1.0), None);
