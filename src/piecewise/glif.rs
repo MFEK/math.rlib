@@ -1,5 +1,7 @@
+use crate::quadbezier::QuadBezier;
+
 use super::{Bezier, Piecewise, Vector};
-use glifparser::{Contour, Outline, Handle, PointType, glif::{contour::{MFEKContourCommon}, MFEKContour}};
+use glifparser::{Contour, Outline, Handle, PointType, glif::{contour::{MFEKContourCommon}, MFEKContour, inner::quad::MFEKQuadInner, point::quad::QPoint}, outline::RefigurePointTypes};
 #[cfg(feature="default")]
 use glifparser::glif::{MFEKOutline};
 
@@ -83,6 +85,35 @@ impl<T: glifparser::PointData> From<&Contour<T>> for Piecewise<Bezier>
     }
 }
 
+impl<T: glifparser::PointData> From<&MFEKQuadInner<T>> for Piecewise<QuadBezier> {
+    fn from(contour: &MFEKQuadInner<T>) -> Self {
+        let mut new_segs = Vec::new();
+
+        let mut lastpoint: Option<&QPoint<T>> = None;
+
+        for point in contour
+        {
+            match lastpoint
+            {
+                None => {},
+                Some(lastpoint) => {
+                    new_segs.push(QuadBezier::from(lastpoint, point));
+                }
+            }
+
+            lastpoint = Some(point);
+        }
+
+        if let Some(firstpoint) = contour.first() {
+            if firstpoint.ptype != PointType::Move {
+                new_segs.push(QuadBezier::from(&lastpoint.unwrap(), firstpoint));
+            }
+        }
+
+        return Piecewise::new(new_segs, None);
+    }
+}
+
 #[cfg(feature="default")]
 impl<T: glifparser::PointData> From<&MFEKContour<T>> for Piecewise<Bezier>
 {
@@ -137,6 +168,35 @@ impl Piecewise<Bezier> {
             let new_point = control_points[3].to_point(control_points[2].to_handle(), Handle::Colocated, PointType::Curve);
             output_contour.push(new_point);
         }
+    
+        output_contour.refigure_point_types();
+        output_contour
+    }
+}
+
+impl Piecewise<QuadBezier> {
+    pub fn to_contour<T: glifparser::PointData>(&self) -> Vec<QPoint<T>> {
+        let mut output_contour: Vec<QPoint<T>> = Vec::new();
+        let mut last_curve: Option<[Vector; 3]> = None;
+
+        for curve in &self.segs {
+            let control_points = curve.to_control_points();
+
+            let new_point = control_points[0].to_quad_point(control_points[1].to_handle());
+
+            output_contour.push(new_point);
+
+            last_curve = Some(control_points);
+        }
+
+        if output_contour.len() <= 1 { return output_contour }
+
+        if !self.is_closed() {
+            let control_points = last_curve.unwrap();
+            let new_point: QPoint<_> = control_points[2].to_quad_point(Handle::Colocated);
+            output_contour.push(new_point);
+        }
+
     
         output_contour
     }

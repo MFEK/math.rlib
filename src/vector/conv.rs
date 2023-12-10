@@ -17,6 +17,12 @@ impl From<(f32, f32)> for Vector {
     }
 }
 
+impl From<Vector> for kurbo::Point {
+    fn from(value: Vector) -> Self {
+        kurbo::Point { x: value.x, y: value.y }
+    }
+}
+
 impl From<Vector> for (f64, f64) {
     fn from(v: Vector) -> Self {
         (v.x, v.y)
@@ -104,6 +110,18 @@ impl Mul<f64> for Vector {
     type Output = Vector;
     fn mul(self, s: f64) -> Vector {
         Vector::from_components(self.x * s, self.y * s)
+    }
+}
+
+
+impl Mul<Vector> for f64 {
+    type Output = Vector;
+
+    fn mul(self, rhs: Vector) -> Self::Output {
+        Vector {
+            x: self * rhs.x,
+            y: self * rhs.y,
+        }
     }
 }
 

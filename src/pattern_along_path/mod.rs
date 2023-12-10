@@ -2,7 +2,8 @@ use std::vec;
 
 use super::{ArcLengthParameterization, Bezier, Evaluate, EvalScale, EvalTranslate, Parameterization, Piecewise, Vector, Rect};
 use super::{AngleParameterization};
-use crate::{vec2, angleparameterization, Primitive};
+use crate::subdivide::Subdivide;
+use crate::{vec2, angleparameterization};
 
 use flo_curves::bezier::curve_intersects_ray;
 use glifparser::outline::IntoKurbo;

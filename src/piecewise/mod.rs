@@ -8,7 +8,7 @@ use crate::consts::SMALL_DISTANCE;
 use crate::arclenparameterization::ArcLengthParameterization;
 use crate::bezier::Bezier;
 use crate::evaluate::Evaluate;
-use crate::primitive::Primitive;
+use crate::subdivide::Subdivide;
 use crate::vector::Vector;
 
 // This struct models a simple piecewise function. It maps 0-1 such that 0 is the beginning of the first curve
@@ -86,7 +86,7 @@ impl<T: Evaluate> Piecewise<T> {
 }
 
 // TODO: Move these functions to a more appropriate submodule.
-impl<T: Evaluate+Primitive+Send+ Sync> Piecewise<Piecewise<T>>
+impl<T: Evaluate+Subdivide+Send+Sync+Clone> Piecewise<Piecewise<T>>
 {
     // we split the primitive that contains t at t
     pub fn subdivide(&self, t: f64) -> Self
@@ -264,7 +264,7 @@ impl Piecewise<Bezier> {
     }
 }
 
-impl<T: Evaluate+Primitive+Send+Sync> Piecewise<T>
+impl<T: Evaluate+Subdivide+Send+Sync+Clone> Piecewise<T>
 {    
 
     pub fn is_closed(&self) -> bool
@@ -281,7 +281,7 @@ impl<T: Evaluate+Primitive+Send+Sync> Piecewise<T>
         let mut new_segments = Vec::new();
         let mut new_cuts = Vec::new();
         for primitive in &self.segs {
-            let subdivisions = primitive.subdivide(t);
+            let subdivisions = primitive.split(t);
 
             match subdivisions {
                 Some(subs) => {         
@@ -322,7 +322,7 @@ impl<T: Evaluate+Primitive+Send+Sync> Piecewise<T>
         let iter = self.segs.iter().enumerate();
         for (i, seg) in iter {
             if i == seg_num {
-                let subdivisions = seg.subdivide(seg_time);
+                let subdivisions = seg.split(seg_time);
 
                 match subdivisions {
                     Some(subs) => {         
@@ -359,12 +359,12 @@ impl<T: Evaluate+Primitive+Send+Sync> Piecewise<T>
 }
 
 // Returns a primitive and the range of t values that it covers.
-pub struct SegmentIterator<T: Evaluate+Primitive+Sized> {
+pub struct SegmentIterator<T: Evaluate+Subdivide+Sized> {
     piecewise: Piecewise<T>,
     counter: usize
 }
 
-impl<T: Evaluate+Primitive+Sized> SegmentIterator<T> {
+impl<T: Evaluate+Subdivide+Sized> SegmentIterator<T> {
     pub fn new(pw: Piecewise<T>) -> Self {
         Self {
             piecewise: pw,
@@ -373,7 +373,7 @@ impl<T: Evaluate+Primitive+Sized> SegmentIterator<T> {
     }
 }
 
-impl<T: Evaluate+Primitive+Sized> Iterator for SegmentIterator<T> {
+impl<T: Evaluate+Subdivide+Sized+Clone> Iterator for SegmentIterator<T> {
     type Item = (T, f64, f64); // primitive, start time, end time
 
     fn next(&mut self) -> Option<Self::Item>

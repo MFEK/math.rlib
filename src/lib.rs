@@ -16,12 +16,13 @@ pub mod parameterization;
 pub mod pattern_along_path;
 pub mod piecewise;
 pub mod polar;
-pub mod primitive;
 pub mod rect;
 pub mod variable_width_stroking;
 pub mod vector;
 pub mod mfek;
 pub mod angleparameterization;
+pub mod subdivide;
+pub mod quadbezier;
 
 #[cfg(feature = "skia")]
 pub use {
@@ -35,7 +36,6 @@ pub use self::bezier::Bezier;
 pub use self::glyphbuilder::GlyphBuilder;
 pub use self::parameterization::Parameterization;
 pub use self::piecewise::Piecewise;
-pub use self::primitive::Primitive;
 pub use self::rect::Rect;
 pub use self::vector::Vector;
 

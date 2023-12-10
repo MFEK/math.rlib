@@ -55,7 +55,13 @@ impl<PD: PointData> ResolveCubic<PD> for MFEKContour<PD> {
                         cpoint.a = Handle::At(hx, hy);
                     }
 
-                    let prev_point_idx = if idx == 0 && contour.len() > 1 && contour[0].ptype != PointType::Move { contour.len() - 1 } else { usize::MAX };
+                    let prev_point_idx = if idx == 0 && contour.len() > 1 && contour[0].ptype != PointType::Move {
+                        contour.len() - 1 
+                    } else if idx != 0 {
+                        idx - 1
+                    } else {
+                        usize::MAX
+                    };
                     if let Some(prev_point) = contour.get(prev_point_idx) {
                         if let Handle::At(x, y) = prev_point.a {
                             let hx = point.x + 2./3. * (x - point.x);
