@@ -17,12 +17,16 @@ pub fn convert_glif(settings: &NibSettings) -> Option<String> {
     if !settings.quiet {
         eprintln!("Reading nib...");
     }
-    let nibglif: glifparser::Glif<()> = glifparser::read(&fs::read_to_string(&settings.nib).expect("Nib .glif inaccessible")).unwrap();
+    let nibglif: glifparser::Glif<()> =
+        glifparser::read(&fs::read_to_string(&settings.nib).expect("Nib .glif inaccessible"))
+            .unwrap();
     if !settings.quiet {
         eprintln!("Reading path...");
     }
-    let ssglif: glifparser::Glif<()> =
-        glifparser::read(&fs::read_to_string(&settings.path).expect("Path to stroke .glif inaccessible")).unwrap();
+    let ssglif: glifparser::Glif<()> = glifparser::read(
+        &fs::read_to_string(&settings.path).expect("Path to stroke .glif inaccessible"),
+    )
+    .unwrap();
 
     if ssglif.outline.is_none() {
         return Some(glifparser::write(&ssglif).unwrap());
@@ -42,7 +46,10 @@ pub fn convert_glif(settings: &NibSettings) -> Option<String> {
         let shape = fontforge::NibIsValid(nibss);
         if shape != 0 {
             let shapetype = fontforge::NibShapeTypeMsg(shape);
-            eprintln!("Shape: {}\nCannot stroke!", ffi::CStr::from_ptr(shapetype).to_str().unwrap());
+            eprintln!(
+                "Shape: {}\nCannot stroke!",
+                ffi::CStr::from_ptr(shapetype).to_str().unwrap()
+            );
             return None;
         }
         let si = fontforge::InitializeStrokeInfo(ptr::null_mut());

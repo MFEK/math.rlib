@@ -1,7 +1,14 @@
 use std::cmp::PartialEq;
 use std::ops::{Add, Mul, Sub};
 
-pub trait Coordinate : Sized+Copy+Add<Self, Output=Self>+Mul<Self, Output=Self>+Sub<Self, Output=Self>+PartialEq {
+pub trait Coordinate:
+    Sized
+    + Copy
+    + Add<Self, Output = Self>
+    + Mul<Self, Output = Self>
+    + Sub<Self, Output = Self>
+    + PartialEq
+{
     fn magnitude(self) -> f64;
     fn distance(self, v1: Self) -> f64;
     fn lerp(self, v1: Self, t: f64) -> Self;

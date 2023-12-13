@@ -1,6 +1,6 @@
 /// Conversion boilerplate
-use std::ops::{Add, Mul, Div, Neg, Sub};
-use std::ops::{AddAssign, MulAssign, DivAssign, SubAssign};
+use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
 use std::ops::{Index, IndexMut};
 
 use super::Vector;
@@ -19,7 +19,10 @@ impl From<(f32, f32)> for Vector {
 
 impl From<Vector> for kurbo::Point {
     fn from(value: Vector) -> Self {
-        kurbo::Point { x: value.x, y: value.y }
+        kurbo::Point {
+            x: value.x,
+            y: value.y,
+        }
     }
 }
 
@@ -113,7 +116,6 @@ impl Mul<f64> for Vector {
     }
 }
 
-
 impl Mul<Vector> for f64 {
     type Output = Vector;
 
@@ -164,7 +166,7 @@ impl Index<usize> for Vector {
         match index {
             0 => &self.x,
             1 => &self.y,
-            _ => panic!("can only index Vector by 0 or 1")
+            _ => panic!("can only index Vector by 0 or 1"),
         }
     }
 }
@@ -174,7 +176,7 @@ impl IndexMut<usize> for Vector {
         match index {
             0 => &mut self.x,
             1 => &mut self.y,
-            _ => panic!("can only index Vector by 0 or 1")
+            _ => panic!("can only index Vector by 0 or 1"),
         }
     }
 }

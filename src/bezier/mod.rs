@@ -1,4 +1,4 @@
-use crate::{Evaluate, subdivide::Subdivide};
+use crate::{subdivide::Subdivide, Evaluate};
 
 use super::vector::Vector;
 use glifparser::{Point as GPPoint, PointData as GPPointData};
@@ -70,12 +70,13 @@ impl Bezier {
 
         return new_bez;
     }
-    
 }
 
 impl Subdivide for Bezier {
     fn split(&self, t: f64) -> Option<(Bezier, Bezier)> {
-        if t == 1. || t == 0. { return None }
+        if t == 1. || t == 0. {
+            return None;
+        }
 
         // Perform De Casteljau's algorithm to split the curve at t
         let w12 = self.w1.lerp(self.w2, t);
@@ -92,5 +93,4 @@ impl Subdivide for Bezier {
 
         Some((first_half, second_half))
     }
-
 }

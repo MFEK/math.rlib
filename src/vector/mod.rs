@@ -5,8 +5,6 @@ mod skia;
 pub mod flo;
 pub mod glif;
 
-
-
 use super::coordinate::Coordinate;
 
 #[derive(Clone, Copy, Debug)]

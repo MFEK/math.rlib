@@ -1,7 +1,7 @@
-use flo_curves::bezier::{de_casteljau3, derivative3, de_casteljau2};
+use flo_curves::bezier::{de_casteljau2, de_casteljau3, derivative3};
 use glifparser::{glif::point::quad::QPoint, PointData};
 
-use crate::{Vector, Rect, Evaluate, subdivide::Subdivide};
+use crate::{subdivide::Subdivide, Evaluate, Rect, Vector};
 
 #[derive(Clone, Debug)]
 #[allow(non_snake_case)]
@@ -32,12 +32,15 @@ impl QuadBezier {
     pub fn to_control_points(&self) -> [Vector; 3] {
         [self.w1.clone(), self.w2.clone(), self.w3.clone()]
     }
-    
+
     pub fn calc_line_intersection(&self, line_start: Vector, line_end: Vector) -> Vec<Vector> {
         let mut intersections = Vec::new();
 
         // Inverse line normal
-        let normal = Vector { x: line_start.y - line_end.y, y: line_end.x - line_start.x };
+        let normal = Vector {
+            x: line_start.y - line_end.y,
+            y: line_end.x - line_start.x,
+        };
 
         // Q-coefficients
         let c2 = Vector {

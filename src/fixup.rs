@@ -12,12 +12,16 @@ impl<PD: PointData> Fixup for Outline<PD> {
         for c in self.iter_mut() {
             for p in c.iter_mut() {
                 if let glifparser::Handle::At(ax, ay) = p.a {
-                    if (ax - p.x).abs() < within && (ay - p.y).abs() < within { p.a = glifparser::Handle::Colocated; }
+                    if (ax - p.x).abs() < within && (ay - p.y).abs() < within {
+                        p.a = glifparser::Handle::Colocated;
+                    }
                 }
                 if let glifparser::Handle::At(bx, by) = p.b {
-                    if (bx - p.x).abs() < within && (by - p.y).abs() < within { p.b = glifparser::Handle::Colocated; }
+                    if (bx - p.x).abs() < within && (by - p.y).abs() < within {
+                        p.b = glifparser::Handle::Colocated;
+                    }
                 }
             }
-        }   
+        }
     }
 }
