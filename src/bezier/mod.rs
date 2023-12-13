@@ -1,7 +1,7 @@
 use crate::{Evaluate, subdivide::Subdivide};
 
 use super::vector::Vector;
-use glifparser::{Point as GPPoint, PointData as GPPointData, WhichHandle};
+use glifparser::{Point as GPPoint, PointData as GPPointData};
 
 mod evaluate;
 mod flo;

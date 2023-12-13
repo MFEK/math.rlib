@@ -1,6 +1,6 @@
 use super::vector::Vector;
 use super::rect::Rect;
-use super::coordinate::Coordinate;
+
 
 use crate::vec2;
 

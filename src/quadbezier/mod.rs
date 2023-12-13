@@ -62,7 +62,7 @@ impl QuadBezier {
         let mut roots = Vec::new();
         let d = b * b - 4.0 * c;
         if d > 0.0 {
-            let e = f64::sqrt(d);
+            // let e = f64::sqrt(d);
             roots.push((-b + f64::sqrt(d)) / 2.0);
             roots.push((-b - f64::sqrt(d)) / 2.0);
         } else if d == 0.0 {

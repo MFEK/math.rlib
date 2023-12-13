@@ -1,4 +1,3 @@
-use crate::coordinate::Coordinate as _;
 use super::evaluate::Evaluate;
 use super::parameterization::Parameterization;
 

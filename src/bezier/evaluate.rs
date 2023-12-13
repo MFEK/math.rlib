@@ -2,7 +2,7 @@ use super::super::{Vector, Evaluate, Rect, Bezier};
 
 use flo_curves::BezierCurve;
 
-use flo_curves::bezier::{derivative4, de_casteljau2, de_casteljau3, de_casteljau4};
+use flo_curves::bezier::{derivative4, de_casteljau3, de_casteljau4};
 
 impl Evaluate for Bezier {
     
