@@ -1,6 +1,5 @@
-use super::vector::Vector;
 use super::rect::Rect;
-use super::coordinate::Coordinate;
+use super::vector::Vector;
 
 use crate::vec2;
 
@@ -8,12 +7,13 @@ use crate::vec2;
 // can be evaluated with respect to time t and return an x, y pair. It also needs to be able to give us
 // a derivative and a bounding box.
 // Could probably use a better name. Maybe Primitive as they're the building blocks of our glyph.
-pub trait Evaluate
-{
-    fn at(&self, t: f64) -> Vector; 
+pub trait Evaluate {
+    fn at(&self, t: f64) -> Vector;
     fn tangent_at(&self, u: f64) -> Vector;
-    fn bounds(&self) -> Rect; // returns an AABB that contains all points 
-    fn apply_transform<F: Send+Sync>(&self, transform: F) -> Self where F: Fn(&Vector) -> Vector;
+    fn bounds(&self) -> Rect; // returns an AABB that contains all points
+    fn apply_transform<F: Send + Sync>(&self, transform: F) -> Self
+    where
+        F: Fn(&Vector) -> Vector;
     fn start_point(&self) -> Vector;
     fn end_point(&self) -> Vector;
 }
@@ -30,21 +30,18 @@ pub trait EvalRotate: Evaluate {
     fn rotate(&self, angle: f64) -> Self;
 }
 
-impl<T: Evaluate+Send+Sync> EvalTranslate for T{
-    fn translate(&self, t: Vector) -> Self
-    {
+impl<T: Evaluate + Send + Sync> EvalTranslate for T {
+    fn translate(&self, t: Vector) -> Self {
         let transform = |v: &Vector| {
             return *v + t;
         };
-    
+
         return self.apply_transform(&transform);
     }
 }
 
-impl<T: Evaluate> EvalScale for T{
-    fn scale(&self, s: Vector) -> Self
-    {
-    
+impl<T: Evaluate> EvalScale for T {
+    fn scale(&self, s: Vector) -> Self {
         let transform = |v: &Vector| {
             return *v * s;
         };
@@ -54,9 +51,7 @@ impl<T: Evaluate> EvalScale for T{
 }
 
 impl<T: Evaluate> EvalRotate for T {
-
-    fn rotate(&self, angle: f64) -> Self 
-    {
+    fn rotate(&self, angle: f64) -> Self {
         let transform = |v: &Vector| {
             return vec2!(
                 v.x * f64::cos(angle) - v.y * f64::sin(angle),

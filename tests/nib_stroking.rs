@@ -1,7 +1,7 @@
 #![cfg(feature = "fontforge")]
 
 use fontforge_typeconv::*;
-use std::{fs, ffi, ptr};
+use std::{ffi, fs, ptr};
 
 #[test]
 fn convert_glif() {

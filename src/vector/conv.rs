@@ -1,6 +1,6 @@
 /// Conversion boilerplate
-use std::ops::{Add, Mul, Div, Neg, Sub};
-use std::ops::{AddAssign, MulAssign, DivAssign, SubAssign};
+use std::ops::{Add, Div, Mul, Neg, Sub};
+use std::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
 use std::ops::{Index, IndexMut};
 
 use super::Vector;
@@ -14,6 +14,15 @@ impl From<(f64, f64)> for Vector {
 impl From<(f32, f32)> for Vector {
     fn from((x, y): (f32, f32)) -> Vector {
         Vector::from_components(x as f64, y as f64)
+    }
+}
+
+impl From<Vector> for kurbo::Point {
+    fn from(value: Vector) -> Self {
+        kurbo::Point {
+            x: value.x,
+            y: value.y,
+        }
     }
 }
 
@@ -107,6 +116,17 @@ impl Mul<f64> for Vector {
     }
 }
 
+impl Mul<Vector> for f64 {
+    type Output = Vector;
+
+    fn mul(self, rhs: Vector) -> Self::Output {
+        Vector {
+            x: self * rhs.x,
+            y: self * rhs.y,
+        }
+    }
+}
+
 impl MulAssign<f64> for Vector {
     fn mul_assign(&mut self, s: f64) {
         *self = Vector::from_components(self.x * s, self.y * s);
@@ -146,7 +166,7 @@ impl Index<usize> for Vector {
         match index {
             0 => &self.x,
             1 => &self.y,
-            _ => panic!("can only index Vector by 0 or 1")
+            _ => panic!("can only index Vector by 0 or 1"),
         }
     }
 }
@@ -156,7 +176,7 @@ impl IndexMut<usize> for Vector {
         match index {
             0 => &mut self.x,
             1 => &mut self.y,
-            _ => panic!("can only index Vector by 0 or 1")
+            _ => panic!("can only index Vector by 0 or 1"),
         }
     }
 }

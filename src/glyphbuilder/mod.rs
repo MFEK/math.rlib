@@ -4,8 +4,9 @@ use glifparser::Glif;
 
 use flo_curves::line::line_intersects_line;
 
+use crate::subdivide::Subdivide;
 use crate::{consts::SMALL_DISTANCE, vec2};
-use crate::{Bezier, EvalRotate, EvalScale, EvalTranslate, Evaluate, Piecewise, Primitive, Vector};
+use crate::{Bezier, EvalRotate, EvalScale, EvalTranslate, Evaluate, Piecewise, Vector};
 
 #[allow(unused)]
 fn vec2_to_rad(vec: Vector) -> f64 {
@@ -140,7 +141,7 @@ impl GlyphBuilder {
             to,
         );
 
-        if let Some((left, right)) = arc.subdivide(0.5) {
+        if let Some((left, right)) = arc.split(0.5) {
             self.bezier_to(left);
             self.bezier_to(right);
         } else {

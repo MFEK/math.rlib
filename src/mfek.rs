@@ -1,21 +1,21 @@
 use std::vec;
 
+use glifparser::glif::contour::MFEKContourCommon;
 use glifparser::glif::contour_operations::vws::VWSHandle;
 use glifparser::glif::contour_operations::ContourOperations;
 use glifparser::glif::inner::MFEKContourInner;
-use glifparser::glif::point::MFEKPointCommon;
 use glifparser::glif::point::hyper::HyperPointType;
-use glifparser::outline::FromKurbo;
-use glifparser::{PointData, Point, WhichHandle, Handle, PointType, Outline, MFEKPointData};
+use glifparser::glif::point::MFEKPointCommon;
 use glifparser::glif::MFEKContour;
-use glifparser::glif::contour::MFEKContourCommon;
+use glifparser::outline::FromKurbo;
+use glifparser::{Handle, MFEKPointData, Outline, Point, PointData, PointType, WhichHandle};
 use spline::SplineSpec;
 
-use crate::{Piecewise, ArcLengthParameterization, Parameterization};
+use crate::{ArcLengthParameterization, Parameterization, Piecewise};
 
 // This method takes a non-cubic contour and resolves it into cubic beziers.
 // The implementation should also properly handle resolving the ContourOperation
-// such that it 
+// such that it
 pub trait ResolveCubic<PD: PointData> {
     fn resolve(&self) -> (Vec<usize>, MFEKContour<PD>);
     fn to_cubic(&self) -> MFEKContour<PD>;
@@ -30,7 +30,7 @@ impl<PD: PointData> ResolveCubic<PD> for MFEKContour<PD> {
     }
 
     fn get_index_map(&self) -> Vec<usize> {
-        return self.resolve().0
+        return self.resolve().0;
     }
 
     fn resolve(&self) -> (Vec<usize>, MFEKContour<PD>) {
@@ -38,7 +38,7 @@ impl<PD: PointData> ResolveCubic<PD> for MFEKContour<PD> {
             MFEKContourInner::Cubic(_) => {
                 let index_map = (0..self.len()).collect();
                 (index_map, self.clone())
-            },
+            }
             MFEKContourInner::Quad(contour) => {
                 // TODO: Refactor these into functions/files.
                 let mut output: Vec<Point<PD>> = Vec::new();
@@ -50,16 +50,23 @@ impl<PD: PointData> ResolveCubic<PD> for MFEKContour<PD> {
                     cpoint.y = point.y;
 
                     if let Handle::At(x, y) = point.a {
-                        let hx = point.x + 2./3. * (x - point.x);
-                        let hy = point.y + 2./3. * (y - point.y);
+                        let hx = point.x + 2. / 3. * (x - point.x);
+                        let hy = point.y + 2. / 3. * (y - point.y);
                         cpoint.a = Handle::At(hx, hy);
                     }
 
-                    let prev_point_idx = if idx == 0 && contour.len() > 1 && contour[0].ptype != PointType::Move { contour.len() - 1 } else { usize::MAX };
+                    let prev_point_idx =
+                        if idx == 0 && contour.len() > 1 && contour[0].ptype != PointType::Move {
+                            contour.len() - 1
+                        } else if idx != 0 {
+                            idx - 1
+                        } else {
+                            usize::MAX
+                        };
                     if let Some(prev_point) = contour.get(prev_point_idx) {
                         if let Handle::At(x, y) = prev_point.a {
-                            let hx = point.x + 2./3. * (x - point.x);
-                            let hy = point.y + 2./3. * (y - point.y); 
+                            let hx = point.x + 2. / 3. * (x - point.x);
+                            let hy = point.y + 2. / 3. * (y - point.y);
                             cpoint.b = Handle::At(hx, hy);
                         }
                     }
@@ -68,13 +75,16 @@ impl<PD: PointData> ResolveCubic<PD> for MFEKContour<PD> {
                 }
 
                 let index_map = (0..self.len()).collect();
-                (index_map, MFEKContour::new(MFEKContourInner::Cubic(output), self.operation().clone()))
-            },
+                (
+                    index_map,
+                    MFEKContour::new(MFEKContourInner::Cubic(output), self.operation().clone()),
+                )
+            }
             MFEKContourInner::Hyper(contour) => {
                 let contour_len = contour.len();
 
                 let mut spline_spec = SplineSpec::new();
-                
+
                 let start_point = tuple_to_kurbo(contour.get_points()[0].get_position());
                 spline_spec.move_to(start_point);
 
@@ -90,24 +100,30 @@ impl<PD: PointData> ResolveCubic<PD> for MFEKContour<PD> {
                                 let p4 = tuple_to_kurbo(next_point.get_position());
 
                                 spline_spec.spline_to(p2, p3, p4, next_point.smooth)
-                            },
+                            }
                             HyperPointType::Line => {
                                 let p = tuple_to_kurbo(next_point.get_position());
                                 spline_spec.line_to(p, next_point.smooth)
-                            },
+                            }
                         }
                     }
                 }
 
-                if self.is_closed() { spline_spec.close() }
+                if self.is_closed() {
+                    spline_spec.close()
+                }
                 let spline = spline_spec.solve();
-                
+
                 let mut index_map: Vec<usize> = vec![];
                 let mut contour_operation = self.operation().clone();
 
-                if let Some(ContourOperations::VariableWidthStroke{ ref mut data }) = contour_operation {
+                if let Some(ContourOperations::VariableWidthStroke { ref mut data }) =
+                    contour_operation
+                {
                     let new_data = data;
-                    if let Some(ContourOperations::VariableWidthStroke{ data: _ }) = self.operation() {
+                    if let Some(ContourOperations::VariableWidthStroke { data: _ }) =
+                        self.operation()
+                    {
                         // NOTE/TODO:
                         // Any op that needs additional handling should be added here.
                         // Finding a way to do this generically across operations would be best!
@@ -115,11 +131,13 @@ impl<PD: PointData> ResolveCubic<PD> for MFEKContour<PD> {
                     }
                 }
 
-
                 let mut final_path = kurbo::BezPath::new();
 
                 if !spline.segments().is_empty() {
-                    final_path.move_to(kurbo::Point::new(spline.segments()[0].p0.x, spline.segments()[0].p0.y));
+                    final_path.move_to(kurbo::Point::new(
+                        spline.segments()[0].p0.x,
+                        spline.segments()[0].p0.y,
+                    ));
 
                     let mut last_handle = None;
                     for (idx, seg) in spline.segments().iter().enumerate() {
@@ -130,24 +148,32 @@ impl<PD: PointData> ResolveCubic<PD> for MFEKContour<PD> {
                         valid_path.move_to(kurbo::Point::new(seg.p0.x, seg.p0.y));
                         valid_path.extend(&bez_path);
 
-                        if let Some(ContourOperations::VariableWidthStroke{ ref mut data }) = contour_operation {
+                        if let Some(ContourOperations::VariableWidthStroke { ref mut data }) =
+                            contour_operation
+                        {
                             let new_data = data;
-                            if let Some(ContourOperations::VariableWidthStroke{ ref data }) = self.operation() {
-                                let outline: Outline<MFEKPointData> = Outline::from_kurbo(&valid_path);
+                            if let Some(ContourOperations::VariableWidthStroke { ref data }) =
+                                self.operation()
+                            {
+                                let outline: Outline<MFEKPointData> =
+                                    Outline::from_kurbo(&valid_path);
 
                                 if let Some(pw) = Piecewise::from(&outline).segs.get(0) {
                                     if pw.segs.len() < 1 {
                                         continue;
                                     }
                                     let arc_len = ArcLengthParameterization::from(pw, 100);
-                                    
+
                                     for cut in pw.cuts.iter() {
                                         // TODO: Get VWS interpolation working by turning this bezpath into a piecewise.
                                         let t = arc_len.parameterize(*cut);
 
-                                        let left = (1. - t) * data.handles[idx].left_offset + t * data.handles[idx+1].left_offset;
-                                        let right = (1. - t) * data.handles[idx].right_offset + t * data.handles[idx+1].right_offset;
-                                        let tangent = (1. - t) * data.handles[idx].tangent_offset + t * data.handles[idx+1].tangent_offset;
+                                        let left = (1. - t) * data.handles[idx].left_offset
+                                            + t * data.handles[idx + 1].left_offset;
+                                        let right = (1. - t) * data.handles[idx].right_offset
+                                            + t * data.handles[idx + 1].right_offset;
+                                        let tangent = (1. - t) * data.handles[idx].tangent_offset
+                                            + t * data.handles[idx + 1].tangent_offset;
 
                                         let new_handle = VWSHandle {
                                             left_offset: left,
@@ -157,7 +183,9 @@ impl<PD: PointData> ResolveCubic<PD> for MFEKContour<PD> {
                                         };
 
                                         last_handle = Some(new_handle);
-                                        if *cut == 1. { continue; }
+                                        if *cut == 1. {
+                                            continue;
+                                        }
                                         new_data.handles.push(new_handle)
                                     }
                                 }
@@ -168,7 +196,9 @@ impl<PD: PointData> ResolveCubic<PD> for MFEKContour<PD> {
                         final_path.extend(bez_path);
                     }
 
-                    if let Some(ContourOperations::VariableWidthStroke{ ref mut data }) = contour_operation {
+                    if let Some(ContourOperations::VariableWidthStroke { ref mut data }) =
+                        contour_operation
+                    {
                         let new_data = data;
                         if let Some(h) = last_handle {
                             new_data.handles.push(h)
@@ -184,9 +214,12 @@ impl<PD: PointData> ResolveCubic<PD> for MFEKContour<PD> {
 
                 let outline = Outline::from_kurbo(&final_path);
                 let contour = outline.first().unwrap_or(&Vec::new()).clone();
-                
-                (index_map, MFEKContour::new(MFEKContourInner::Cubic(contour.clone()), contour_operation))
-            },
+
+                (
+                    index_map,
+                    MFEKContour::new(MFEKContourInner::Cubic(contour.clone()), contour_operation),
+                )
+            }
         }
     }
 }

@@ -8,7 +8,7 @@ use crate::consts::SMALL_DISTANCE;
 use crate::arclenparameterization::ArcLengthParameterization;
 use crate::bezier::Bezier;
 use crate::evaluate::Evaluate;
-use crate::primitive::Primitive;
+use crate::subdivide::Subdivide;
 use crate::vector::Vector;
 
 // This struct models a simple piecewise function. It maps 0-1 such that 0 is the beginning of the first curve
@@ -16,23 +16,17 @@ use crate::vector::Vector;
 #[derive(Clone, Debug)]
 
 pub struct Piecewise<T: Evaluate> {
-    // This supports 
+    // This supports
     pub cuts: Vec<f64>,
     // this should definitely change to private at some point with an iterator or getter to access
-    pub segs: Vec<T>
+    pub segs: Vec<T>,
 }
 
 impl<T: Evaluate> Piecewise<T> {
-    pub fn new(segs: Vec<T>, cuts: Option<Vec<f64>>) -> Self
-    {
+    pub fn new(segs: Vec<T>, cuts: Option<Vec<f64>>) -> Self {
         match cuts {
-            Some(cuts) => {
-                return Self {
-                    cuts,
-                    segs
-                }
-            }
-            
+            Some(cuts) => return Self { cuts, segs },
+
             // if we are given just a list of segments we generate the cuts ourselves
             _ => {
                 let mut out_cuts: Vec<f64> = Vec::new();
@@ -43,29 +37,34 @@ impl<T: Evaluate> Piecewise<T> {
                 let seg_len = segs.len();
 
                 for (i, _seg) in seg_iter {
-                    out_cuts.push((i+1) as f64 / seg_len as f64);
+                    out_cuts.push((i + 1) as f64 / seg_len as f64);
                 }
 
                 return Self {
                     cuts: out_cuts,
-                    segs
-                }
+                    segs,
+                };
             }
         }
     }
 
     // implementation ripped from lib2geom, performs a binary search to find our segment
-    pub fn seg_n(&self, t: f64) -> usize
-    {
+    pub fn seg_n(&self, t: f64) -> usize {
         let mut left = 0;
         let mut right = self.cuts.len() - 1;
 
         while left < right {
-            let middle = (right+left)/2;
+            let middle = (right + left) / 2;
 
-            if left == middle { return middle; }
-            if right == middle { return left; }
-            if self.cuts[middle] == t { return middle };
+            if left == middle {
+                return middle;
+            }
+            if right == middle {
+                return left;
+            }
+            if self.cuts[middle] == t {
+                return middle;
+            };
 
             if self.cuts[middle] < t {
                 left = middle
@@ -78,19 +77,16 @@ impl<T: Evaluate> Piecewise<T> {
         panic!("Couldn't find the target segment!");
     }
 
-    pub fn seg_t(&self, t: f64) -> f64 
-    {
+    pub fn seg_t(&self, t: f64) -> f64 {
         let i = self.seg_n(t);
-        return (t - self.cuts[i]) / (self.cuts[i+1] - self.cuts[i]);
+        return (t - self.cuts[i]) / (self.cuts[i + 1] - self.cuts[i]);
     }
 }
 
 // TODO: Move these functions to a more appropriate submodule.
-impl<T: Evaluate+Primitive+Send+ Sync> Piecewise<Piecewise<T>>
-{
+impl<T: Evaluate + Subdivide + Send + Sync + Clone> Piecewise<Piecewise<T>> {
     // we split the primitive that contains t at t
-    pub fn subdivide(&self, t: f64) -> Self
-    {
+    pub fn subdivide(&self, t: f64) -> Self {
         let mut output = Vec::new();
         for contour in &self.segs {
             output.push(contour.subdivide(t));
@@ -109,7 +105,11 @@ impl Piecewise<Bezier> {
 
 impl Piecewise<Piecewise<Bezier>> {
     pub fn balance(&self) -> Self {
-        let new_segments = self.segs.iter().map(|piecewise| piecewise.balance()).collect();
+        let new_segments = self
+            .segs
+            .iter()
+            .map(|piecewise| piecewise.balance())
+            .collect();
         Piecewise::new(new_segments, None)
     }
 }
@@ -123,10 +123,13 @@ impl Piecewise<Bezier> {
                 if primitive.end_point().distance(next_primitive.start_point()) <= distance {
                     let mut new_primitive = primitive.to_control_points();
                     new_primitive[3] = next_primitive.start_point();
-                    new_segments.push(Bezier::from_points(new_primitive[0], new_primitive[1], new_primitive[2], new_primitive[3]));
-                }
-                else
-                {
+                    new_segments.push(Bezier::from_points(
+                        new_primitive[0],
+                        new_primitive[1],
+                        new_primitive[2],
+                        new_primitive[3],
+                    ));
+                } else {
                     new_segments.push(primitive.clone());
                 }
             }
@@ -141,7 +144,7 @@ impl Piecewise<Bezier> {
         for bez in &self.segs {
             let arclen_param = ArcLengthParameterization::from(bez, accuracy);
             if arclen_param.get_total_arclen() > len {
-               new_segs.push(bez.clone());
+                new_segs.push(bez.clone());
             }
         }
 
@@ -172,8 +175,7 @@ impl Piecewise<Bezier> {
                 } else {
                     current_run.push(bez.clone());
                 }
-            }
-            else {
+            } else {
                 current_run.push(bez.clone());
             }
 
@@ -188,7 +190,6 @@ impl Piecewise<Bezier> {
 
         return Piecewise::new(output_pws, None);
     }
-
 
     pub fn split_at_discontinuities(&self, distance: f64) -> Piecewise<Piecewise<Bezier>> {
         let mut output_pws: Vec<Piecewise<Bezier>> = Vec::new();
@@ -205,8 +206,7 @@ impl Piecewise<Bezier> {
                     current_run = Vec::new();
                     current_run.push(bez.clone());
                 }
-            }
-            else {
+            } else {
                 current_run.push(bez.clone());
             }
 
@@ -220,7 +220,6 @@ impl Piecewise<Bezier> {
 
         return Piecewise::new(output_pws, None);
     }
-
 
     /// Calculate the approximate area by treating each Bezier curve as a line segment
     pub fn approximate_area(&self) -> f64 {
@@ -250,7 +249,7 @@ impl Piecewise<Bezier> {
             prev_point = Some(end);
         }
 
-        // Close the shape by connecting the last point to the first, 
+        // Close the shape by connecting the last point to the first,
         // but only if there is more than one segment
         if let Some(first) = first_point {
             if self.segs.len() > 1 {
@@ -264,27 +263,22 @@ impl Piecewise<Bezier> {
     }
 }
 
-impl<T: Evaluate+Primitive+Send+Sync> Piecewise<T>
-{    
-
-    pub fn is_closed(&self) -> bool
-    {
-        if self.start_point().is_near(self.end_point(),SMALL_DISTANCE)
-        {
+impl<T: Evaluate + Subdivide + Send + Sync + Clone> Piecewise<T> {
+    pub fn is_closed(&self) -> bool {
+        if self.start_point().is_near(self.end_point(), SMALL_DISTANCE) {
             return true;
         }
         return false;
     }
-    
-    pub fn subdivide(&self, t: f64) -> Piecewise<T>
-    {
+
+    pub fn subdivide(&self, t: f64) -> Piecewise<T> {
         let mut new_segments = Vec::new();
         let mut new_cuts = Vec::new();
         for primitive in &self.segs {
-            let subdivisions = primitive.subdivide(t);
+            let subdivisions = primitive.split(t);
 
             match subdivisions {
-                Some(subs) => {         
+                Some(subs) => {
                     new_segments.push(subs.0);
                     new_segments.push(subs.1);
                 }
@@ -311,8 +305,7 @@ impl<T: Evaluate+Primitive+Send+Sync> Piecewise<T>
         return Piecewise::new(new_segments, Some(new_cuts));
     }
 
-    pub fn cut_at_t(&self, t: f64) -> Piecewise<T>
-    {
+    pub fn cut_at_t(&self, t: f64) -> Piecewise<T> {
         let mut new_segments = Vec::new();
         let mut new_cuts = Vec::new();
 
@@ -322,17 +315,17 @@ impl<T: Evaluate+Primitive+Send+Sync> Piecewise<T>
         let iter = self.segs.iter().enumerate();
         for (i, seg) in iter {
             if i == seg_num {
-                let subdivisions = seg.subdivide(seg_time);
+                let subdivisions = seg.split(seg_time);
 
                 match subdivisions {
-                    Some(subs) => {         
+                    Some(subs) => {
                         new_segments.push(subs.0);
                         new_segments.push(subs.1);
                     }
                     _ => {
                         new_segments.push(self.segs[i].clone());
                     }
-                }        
+                }
             } else {
                 new_segments.push(self.segs[i].clone());
             }
@@ -359,25 +352,24 @@ impl<T: Evaluate+Primitive+Send+Sync> Piecewise<T>
 }
 
 // Returns a primitive and the range of t values that it covers.
-pub struct SegmentIterator<T: Evaluate+Primitive+Sized> {
+pub struct SegmentIterator<T: Evaluate + Subdivide + Sized> {
     piecewise: Piecewise<T>,
-    counter: usize
+    counter: usize,
 }
 
-impl<T: Evaluate+Primitive+Sized> SegmentIterator<T> {
+impl<T: Evaluate + Subdivide + Sized> SegmentIterator<T> {
     pub fn new(pw: Piecewise<T>) -> Self {
         Self {
             piecewise: pw,
-            counter: 0
+            counter: 0,
         }
     }
 }
 
-impl<T: Evaluate+Primitive+Sized> Iterator for SegmentIterator<T> {
+impl<T: Evaluate + Subdivide + Sized + Clone> Iterator for SegmentIterator<T> {
     type Item = (T, f64, f64); // primitive, start time, end time
 
-    fn next(&mut self) -> Option<Self::Item>
-    {
+    fn next(&mut self) -> Option<Self::Item> {
         if self.counter == self.piecewise.segs.len() {
             return None;
         }

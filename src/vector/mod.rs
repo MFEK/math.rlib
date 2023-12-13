@@ -90,6 +90,10 @@ impl Vector {
 
         return rotated_point + pivot;
     }
+
+    pub fn cross(self, v1: Vector) -> f64 {
+        self.x * v1.y - self.y * v1.x
+    }
 }
 
 impl Coordinate for Vector {
