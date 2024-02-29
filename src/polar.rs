@@ -97,7 +97,7 @@ impl<PD: PointData> PolarCoordinates for Point<PD> {
     }
 }
 
-impl<PD: PointData> PolarCoordinates for dyn MFEKPointCommon<PD> {
+impl<PD: PointData> PolarCoordinates for &mut dyn MFEKPointCommon<PD> {
     fn cartesian(&self, wh: WhichHandle) -> (f32, f32) {
         let (x, y) = match wh {
             Neither => (self.x(), self.y()),
